@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -16,14 +15,14 @@ class Config:
     COMPANY_PHONE = "+92 310 0989830"
     COMPANY_EMAIL = "xl8.saif@gmail.com"
 
-    # File paths for logo, stamp, signature
-    LOGO_PATH = os.path.join(STATIC_IMAGE_DIR, 'logo.png')
-    STAMP_PATH = os.path.join(STATIC_IMAGE_DIR, 'stamp.png')
-    SIGNATURE_PATH = os.path.join(STATIC_IMAGE_DIR, 'signature.png')
+    # Canonical local assets used by WEMS invoices and documents.
+    LOGO_PATH = os.path.join(STATIC_IMAGE_DIR, 'waraq-logo.png')
+    STAMP_PATH = os.path.join(STATIC_IMAGE_DIR, 'Waraq-Stamp.jpg')
+    SIGNATURE_PATH = os.path.join(STATIC_IMAGE_DIR, 'Waraq-Signature.jpg')
 
     # Business settings
     CURRENCY = "PKR"
-    TAX_RATE = 0.0  # Update as needed
+    TAX_RATE = 0.0
 
     @staticmethod
     def init_app(app):
