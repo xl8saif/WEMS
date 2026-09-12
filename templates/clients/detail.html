@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ client.name }} - WEMS{% endblock %}
+{% block page_title %}Client Profile{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <div class="detail-info">
+        <h2>{{ client.name }}</h2>
+        <span class="badge badge-lg">{{ client.client_type }}</span>
+        <p><i class="fas fa-phone"></i> {{ client.phone or 'N/A' }}</p>
+        <p><i class="fas fa-envelope"></i> {{ client.email or 'N/A' }}</p>
+        <p><i class="fas fa-map-marker-alt"></i> {{ client.address or 'N/A' }}</p>
+        <p><i class="fas fa-id-card"></i> {{ client.cnic or 'N/A' }}</p>
+    </div>
+    <div class="detail-stats">
+        <div class="mini-stat">
+            <span class="mini-stat-value">{{ "{:,.0f}".format(total_billed) }}</span>
+            <span class="mini-stat-label">Total Billed</span>
+        </div>
+        <div class="mini-stat">
+            <span class="mini-stat-value">{{ "{:,.0f}".format(total_paid) }}</span>
+            <span class="mini-stat-label">Total Paid</span>
+        </div>
+        <div class="mini-stat">
+            <span class="mini-stat-value {% if balance > 0 %}text-danger{% else %}text-success{% endif %}">{{ "{:,.0f}".format(balance) }}</span>
+            <span class="mini-stat-label">Balance</span>
+        </div>
+    </div>
+    <div class="detail-actions">
+        <a href="{{ url_for('client_edit', id=client.id) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
+        <a href="{{ url_for('job_add') }}?client_id={{ client.id }}" class="btn btn-primary"><i class="fas fa-plus"></i> New Job</a>
+    </div>
+</div>
+
+<div class="tabs">
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="jobs">Jobs ({{ jobs|length }})</button>
+        <button class="tab-btn" data-tab="invoices">Invoices ({{ invoices|length }})</button>
+    </div>
+
+    <div class="tab-content active" id="jobs">
+        <div class="card">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Job Title</th><th>Category</th><th>Status</th><th>Cost</th><th>Date</th></tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td><a href="{{ url_for('job_detail', id=job.id) }}">{{ job.job_title }}</a></td>
+                        <td><span class="badge">{{ job.category }}</span></td>
+                        <td><span class="status-badge status-{{ job.status|lower }}">{{ job.status }}</span></td>
+                        <td>{{ "{:,.0f}".format(job.cost) }}</td>
+                        <td>{{ job.created_at[:10] }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="empty-state">No jobs for this client.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-content" id="invoices">
+        <div class="card">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Invoice #</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                    <tr>
+                        <td><a href="{{ url_for('invoice_detail', id=inv.id) }}">{{ inv.invoice_number }}</a></td>
+                        <td>{{ inv.issue_date }}</td>
+                        <td>{{ "{:,.0f}".format(inv.total_amount) }}</td>
+                        <td>{{ "{:,.0f}".format(inv.paid_amount) }}</td>
+                        <td class="{% if inv.balance_due > 0 %}text-danger{% endif %}">{{ "{:,.0f}".format(inv.balance_due) }}</td>
+                        <td><span class="status-badge status-{{ inv.status|lower }}">{{ inv.status }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="empty-state">No invoices for this client.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById(this.dataset.tab).classList.add('active');
+    });
+});
+</script>
+{% endblock %}

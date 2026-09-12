@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Invoices - WEMS{% endblock %}
+{% block page_title %}Invoices{% endblock %}
+{% block content %}
+<div class="page-actions">
+    <form class="search-form" method="get">
+        <input type="text" name="search" placeholder="Search invoices..." value="{{ search }}" class="form-input">
+        <select name="status" class="form-select">
+            <option value="">All Status</option>
+            <option value="Paid" {% if status == 'Paid' %}selected{% endif %}>Paid</option>
+            <option value="Unpaid" {% if status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+            <option value="Partial" {% if status == 'Partial' %}selected{% endif %}>Partial</option>
+        </select>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+        <a href="{{ url_for('invoices_list') }}" class="btn btn-outline">Clear</a>
+    </form>
+    <a href="{{ url_for('invoice_create') }}" class="btn btn-success"><i class="fas fa-plus"></i> Create Invoice</a>
+</div>
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr><th>Invoice #</th><th>Client</th><th>Issue Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            {% for inv in invoices %}
+            <tr>
+                <td><a href="{{ url_for('invoice_detail', id=inv.id) }}">{{ inv.invoice_number }}</a></td>
+                <td>{{ inv.client_name }}</td>
+                <td>{{ inv.issue_date }}</td>
+                <td>{{ "{:,.0f}".format(inv.total_amount) }}</td>
+                <td>{{ "{:,.0f}".format(inv.paid_amount) }}</td>
+                <td class="{% if inv.balance_due > 0 %}text-danger{% endif %}">{{ "{:,.0f}".format(inv.balance_due) }}</td>
+                <td><span class="status-badge status-{{ inv.status|lower }}">{{ inv.status }}</span></td>
+                <td class="actions">
+                    <a href="{{ url_for('invoice_detail', id=inv.id) }}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                    <a href="{{ url_for('invoice_pdf', id=inv.id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-file-pdf"></i></a>
+                    <form action="{{ url_for('invoice_delete', id=inv.id) }}" method="post" class="inline-form" onsubmit="return confirm('Delete this invoice?');">
+                        <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="empty-state">No invoices found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
