@@ -1,127 +1,16 @@
 {% extends "base.html" %}
-
-{% block title %}{% if job %}Edit{% else %}New{% endif %} Job - WEMS{% endblock %}
-{% block page_title %}{% if job %}Edit{% else %}New{% endif %} Job{% endblock %}
-
+{% block title %}{% if job %}کام میں ترمیم{% else %}نیا کام{% endif %} — WEMS{% endblock %}
+{% block page_title %}{% if job %}کام میں ترمیم{% else %}نیا کام{% endif %}{% endblock %}
 {% block content %}
-<div class="card form-card">
-    <form method="post" class="form">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="client_id">Client *</label>
-                <select id="client_id" name="client_id" required class="form-select">
-                    {% for client in clients %}
-                    <option value="{{ client.id }}" {% if job and job.client_id == client.id %}selected{% endif %}>{{ client.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="service_id">Service</label>
-                <select id="service_id" name="service_id" class="form-select" onchange="autoFillService()">
-                    <option value="">-- Select Service --</option>
-                    {% for service in services %}
-                    <option value="{{ service.id }}" data-category="{{ service.category }}" data-price="{{ service.base_price }}" data-name="{{ service.service_name }}">
-                        {{ service.service_name }} ({{ service.category }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="job_title">Job Title *</label>
-                <input type="text" id="job_title" name="job_title" value="{{ job.job_title if job else '' }}" required class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="category">Category *</label>
-                <select id="category" name="category" required class="form-select">
-                    <option>Legal Drafting</option>
-                    <option>Court Services</option>
-                    <option>Printing</option>
-                    <option>Online Registration</option>
-                    <option>Documentation</option>
-                    <option>Other</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="3" class="form-input">{{ job.description if job else '' }}</textarea>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="priority">Priority</label>
-                <select id="priority" name="priority" class="form-select">
-                    <option value="Low" {% if job and job.priority == 'Low' %}selected{% endif %}>Low</option>
-                    <option value="Normal" {% if job and job.priority == 'Normal' %}selected{% endif %}>Normal</option>
-                    <option value="High" {% if job and job.priority == 'High' %}selected{% endif %}>High</option>
-                    <option value="Urgent" {% if job and job.priority == 'Urgent' %}selected{% endif %}>Urgent</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="assigned_to">Assigned To</label>
-                <input type="text" id="assigned_to" name="assigned_to" value="{{ job.assigned_to if job else '' }}" class="form-input">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="start_date">Start Date</label>
-                <input type="date" id="start_date" name="start_date" value="{{ job.start_date if job else '' }}" class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="due_date">Due Date</label>
-                <input type="date" id="due_date" name="due_date" value="{{ job.due_date if job else '' }}" class="form-input">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="cost">Estimated Cost ({{ currency }})</label>
-                <input type="number" id="cost" name="cost" value="{{ job.cost if job else 0 }}" step="0.01" class="form-input">
-            </div>
-            {% if job %}
-            <div class="form-group">
-                <label for="status">Status</label>
-                <select id="status" name="status" class="form-select">
-                    <option value="Pending" {% if job.status == 'Pending' %}selected{% endif %}>Pending</option>
-                    <option value="In Progress" {% if job.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                    <option value="Completed" {% if job.status == 'Completed' %}selected{% endif %}>Completed</option>
-                    <option value="Cancelled" {% if job.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
-                </select>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea id="notes" name="notes" rows="2" class="form-input">{{ job.notes if job else '' }}</textarea>
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> {% if job %}Update{% else %}Create{% endif %}</button>
-            <a href="{{ url_for('jobs_list') }}" class="btn btn-outline">Cancel</a>
-        </div>
-    </form>
-</div>
-
-<script>
-function autoFillService() {
-    const select = document.getElementById('service_id');
-    const option = select.options[select.selectedIndex];
-    if (option.value) {
-        document.getElementById('job_title').value = option.dataset.name;
-        document.getElementById('category').value = option.dataset.category;
-        document.getElementById('cost').value = option.dataset.price;
-    }
-}
-
-// Pre-select category if editing
-{% if job %}
-document.getElementById('category').value = '{{ job.category }}';
-{% endif %}
-</script>
+<div class="card form-card"><form method="post" class="form">
+<div class="form-row"><div class="form-group"><label for="client_id">کلائنٹ *</label><select id="client_id" name="client_id" required class="form-select">{% for client in clients %}<option value="{{ client.id }}" {% if job and job.client_id == client.id %}selected{% endif %}>{{ client.name }}</option>{% endfor %}</select></div><div class="form-group"><label for="service_id">خدمت</label><select id="service_id" name="service_id" class="form-select" onchange="autoFillService()"><option value="">-- خدمت منتخب کریں --</option>{% for service in services %}<option value="{{ service.id }}" data-category="{{ service.category }}" data-price="{{ service.base_price }}" data-name="{{ service.service_name }}">{{ service.service_name }} ({{ category_labels.get(service.category, service.category) }})</option>{% endfor %}</select></div></div>
+<div class="form-row"><div class="form-group"><label for="job_title">کام کا عنوان *</label><input type="text" id="job_title" name="job_title" value="{{ job.job_title if job else '' }}" required class="form-input"></div><div class="form-group"><label for="category">زمرہ *</label><select id="category" name="category" required class="form-select"><option value="Legal Drafting">قانونی مسودہ نویسی</option><option value="Court Services">عدالتی خدمات</option><option value="Printing">طباعت</option><option value="Online Registration">آن لائن رجسٹریشن</option><option value="Documentation">دستاویزی خدمات</option><option value="Other">دیگر</option></select></div></div>
+<div class="form-group"><label for="description">تفصیل</label><textarea id="description" name="description" rows="3" class="form-input">{{ job.description if job else '' }}</textarea></div>
+<div class="form-row"><div class="form-group"><label for="priority">ترجیح</label><select id="priority" name="priority" class="form-select"><option value="Low" {% if job and job.priority == 'Low' %}selected{% endif %}>کم</option><option value="Normal" {% if job and job.priority == 'Normal' %}selected{% endif %}>معمول</option><option value="High" {% if job and job.priority == 'High' %}selected{% endif %}>زیادہ</option><option value="Urgent" {% if job and job.priority == 'Urgent' %}selected{% endif %}>فوری</option></select></div><div class="form-group"><label for="assigned_to">ذمہ دار فرد</label><input type="text" id="assigned_to" name="assigned_to" value="{{ job.assigned_to if job else '' }}" class="form-input"></div></div>
+<div class="form-row"><div class="form-group"><label for="start_date">آغاز کی تاریخ</label><input type="date" id="start_date" name="start_date" value="{{ job.start_date if job else '' }}" class="form-input" dir="ltr"></div><div class="form-group"><label for="due_date">آخری تاریخ</label><input type="date" id="due_date" name="due_date" value="{{ job.due_date if job else '' }}" class="form-input" dir="ltr"></div></div>
+<div class="form-row"><div class="form-group"><label for="cost">تخمینی لاگت ({{ currency }})</label><input type="number" id="cost" name="cost" value="{{ job.cost if job else 0 }}" step="0.01" class="form-input" dir="ltr"></div>{% if job %}<div class="form-group"><label for="status">حیثیت</label><select id="status" name="status" class="form-select"><option value="Pending" {% if job.status == 'Pending' %}selected{% endif %}>زیرِ التوا</option><option value="In Progress" {% if job.status == 'In Progress' %}selected{% endif %}>جاری ہے</option><option value="Completed" {% if job.status == 'Completed' %}selected{% endif %}>مکمل</option><option value="Cancelled" {% if job.status == 'Cancelled' %}selected{% endif %}>منسوخ</option></select></div>{% endif %}</div>
+<div class="form-group"><label for="notes">نوٹس</label><textarea id="notes" name="notes" rows="2" class="form-input">{{ job.notes if job else '' }}</textarea></div>
+<div class="form-actions"><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> {% if job %}اپ ڈیٹ کریں{% else %}محفوظ کریں{% endif %}</button><a href="{{ url_for('jobs_list') }}" class="btn btn-outline">منسوخ کریں</a></div>
+</form></div>
+<script>function autoFillService(){const select=document.getElementById('service_id');const option=select.options[select.selectedIndex];if(option.value){document.getElementById('job_title').value=option.dataset.name;document.getElementById('category').value=option.dataset.category;document.getElementById('cost').value=option.dataset.price;}}{% if job %}document.getElementById('category').value='{{ job.category }}';{% endif %}</script>
 {% endblock %}
