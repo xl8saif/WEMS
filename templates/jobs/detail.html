@@ -1,53 +1,9 @@
 {% extends "base.html" %}
-
-{% block title %}{{ job.job_title }} - WEMS{% endblock %}
-{% block page_title %}Job Details{% endblock %}
-
+{% block title %}{{ job.job_title }} — WEMS{% endblock %}
+{% block page_title %}کام کی تفصیلات{% endblock %}
 {% block content %}
-<div class="detail-header">
-    <div class="detail-info">
-        <h2>{{ job.job_title }}</h2>
-        <span class="status-badge status-{{ job.status|lower|replace(' ', '-') }}">{{ job.status }}</span>
-        <span class="priority-badge priority-{{ job.priority|lower }}">{{ job.priority }}</span>
-        <p><i class="fas fa-user"></i> <strong>Client:</strong> {{ job.client_name }}</p>
-        <p><i class="fas fa-phone"></i> <strong>Phone:</strong> {{ job.client_phone or 'N/A' }}</p>
-        <p><i class="fas fa-map-marker-alt"></i> <strong>Address:</strong> {{ job.client_address or 'N/A' }}</p>
-        <p><i class="fas fa-tag"></i> <strong>Service:</strong> {{ job.service_name or 'Custom Job' }}</p>
-    </div>
-    <div class="detail-stats">
-        <div class="mini-stat">
-            <span class="mini-stat-value">{{ "{:,.0f}".format(job.cost) }}</span>
-            <span class="mini-stat-label">Cost</span>
-        </div>
-        <div class="mini-stat">
-            <span class="mini-stat-value">{{ job.due_date or 'N/A' }}</span>
-            <span class="mini-stat-label">Due Date</span>
-        </div>
-    </div>
-    <div class="detail-actions">
-        <a href="{{ url_for('job_edit', id=job.id) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
-        <a href="{{ url_for('invoice_create') }}?job_id={{ job.id }}" class="btn btn-success"><i class="fas fa-file-invoice"></i> Create Invoice</a>
-    </div>
-</div>
-
-<div class="card">
-    <h3><i class="fas fa-info-circle"></i> Description</h3>
-    <p>{{ job.description or 'No description provided.' }}</p>
-</div>
-
-<div class="card">
-    <h3><i class="fas fa-sticky-note"></i> Notes</h3>
-    <p>{{ job.notes or 'No notes.' }}</p>
-</div>
-
-<div class="card">
-    <h3><i class="fas fa-calendar-alt"></i> Timeline</h3>
-    <table class="data-table">
-        <tr><td><strong>Start Date</strong></td><td>{{ job.start_date or 'Not set' }}</td></tr>
-        <tr><td><strong>Due Date</strong></td><td>{{ job.due_date or 'Not set' }}</td></tr>
-        <tr><td><strong>Completed Date</strong></td><td>{{ job.completed_date or 'Not completed' }}</td></tr>
-        <tr><td><strong>Assigned To</strong></td><td>{{ job.assigned_to or 'Unassigned' }}</td></tr>
-        <tr><td><strong>Created</strong></td><td>{{ job.created_at }}</td></tr>
-    </table>
-</div>
+<div class="detail-header"><div class="detail-info"><h2>{{ job.job_title }}</h2><span class="status-badge status-{{ job.status|lower|replace(' ', '-') }}">{{ status_labels.get(job.status, job.status) }}</span> <span class="priority-badge priority-{{ job.priority|lower }}">{{ priority_labels.get(job.priority, job.priority) }}</span><p><i class="fas fa-user"></i> <strong>کلائنٹ:</strong> {{ job.client_name }}</p><p><i class="fas fa-phone"></i> <strong>فون:</strong> {{ job.client_phone or 'دستیاب نہیں' }}</p><p><i class="fas fa-map-marker-alt"></i> <strong>پتہ:</strong> {{ job.client_address or 'دستیاب نہیں' }}</p><p><i class="fas fa-tag"></i> <strong>خدمت:</strong> {{ job.service_name or 'کسٹم کام' }}</p></div><div class="detail-stats"><div class="mini-stat"><span class="mini-stat-value">{{ "{:,.0f}".format(job.cost) }}</span><span class="mini-stat-label">لاگت</span></div><div class="mini-stat"><span class="mini-stat-value">{{ job.due_date or 'مقرر نہیں' }}</span><span class="mini-stat-label">آخری تاریخ</span></div></div><div class="detail-actions"><a href="{{ url_for('job_edit', id=job.id) }}" class="btn btn-warning"><i class="fas fa-edit"></i> ترمیم</a><a href="{{ url_for('invoice_create') }}?job_id={{ job.id }}" class="btn btn-success"><i class="fas fa-file-invoice"></i> انوائس بنائیں</a></div></div>
+<div class="card"><h3><i class="fas fa-info-circle"></i> تفصیل</h3><p>{{ job.description or 'کوئی تفصیل فراہم نہیں کی گئی۔' }}</p></div>
+<div class="card"><h3><i class="fas fa-sticky-note"></i> نوٹس</h3><p>{{ job.notes or 'کوئی نوٹس نہیں۔' }}</p></div>
+<div class="card"><h3><i class="fas fa-calendar-alt"></i> ٹائم لائن</h3><table class="data-table"><tr><td><strong>آغاز کی تاریخ</strong></td><td>{{ job.start_date or 'مقرر نہیں' }}</td></tr><tr><td><strong>آخری تاریخ</strong></td><td>{{ job.due_date or 'مقرر نہیں' }}</td></tr><tr><td><strong>تکمیل کی تاریخ</strong></td><td>{{ job.completed_date or 'ابھی مکمل نہیں ہوا' }}</td></tr><tr><td><strong>ذمہ دار فرد</strong></td><td>{{ job.assigned_to or 'متعین نہیں' }}</td></tr><tr><td><strong>بنایا گیا</strong></td><td>{{ job.created_at }}</td></tr></table></div>
 {% endblock %}
