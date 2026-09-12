@@ -12,9 +12,9 @@ class Config:
     STATIC_IMAGE_DIR = os.path.join(BASE_DIR, 'static', 'images')
 
     COMPANY_NAME = "Waraq Enterprises"
-    COMPANY_ADDRESS = "Gilgit, Pakistan"
-    COMPANY_PHONE = "+92-XXX-XXXXXXX"
-    COMPANY_EMAIL = "info@waraqenterprises.com"
+    COMPANY_ADDRESS = "Waraq KIU Road, Konodas, Gilgit, Pakistan"
+    COMPANY_PHONE = "+92 310 0989830"
+    COMPANY_EMAIL = "xl8.saif@gmail.com"
 
     # File paths for logo, stamp, signature
     LOGO_PATH = os.path.join(STATIC_IMAGE_DIR, 'logo.png')
