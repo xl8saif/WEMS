@@ -9,7 +9,9 @@ class Config:
     INVOICE_DIR = os.path.join(DATA_DIR, 'invoices')
     EXPORT_DIR = os.path.join(DATA_DIR, 'exports')
     BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
-    STATIC_IMAGE_DIR = os.path.join(BASE_DIR, 'static', 'images')
+    
+    # Use DATA_DIR for static images in frozen context (PyInstaller)
+    STATIC_IMAGE_DIR = os.path.join(DATA_DIR, 'static', 'images')
 
     COMPANY_NAME = "Waraq Enterprises"
     COMPANY_ADDRESS = "Waraq KIU Road, Konodas, Gilgit, Pakistan"
