@@ -1,25 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Payments - WEMS{% endblock %}
-{% block page_title %}Payments{% endblock %}
+{% block title %}ادائیگیاں — WEMS{% endblock %}
+{% block page_title %}ادائیگیوں کا ریکارڈ{% endblock %}
 {% block content %}
-<div class="card">
-    <table class="data-table">
-        <thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Invoice #</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead>
-        <tbody>
-            {% for p in payments %}
-            <tr>
-                <td>{{ p.id }}</td>
-                <td>{{ p.payment_date }}</td>
-                <td>{{ p.client_name }}</td>
-                <td><a href="{{ url_for('invoice_detail', id=p.invoice_id) }}">{{ p.invoice_number }}</a></td>
-                <td>{{ "{:,.2f}".format(p.amount) }}</td>
-                <td>{{ p.payment_method }}</td>
-                <td>{{ p.reference_no or '-' }}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="7" class="empty-state">No payments recorded.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<div class="card"><table class="data-table"><thead><tr><th>شناختی نمبر</th><th>تاریخ</th><th>کلائنٹ</th><th>انوائس نمبر</th><th>رقم</th><th>طریقہ</th><th>حوالہ</th></tr></thead><tbody>{% for p in payments %}<tr><td>{{ p.id }}</td><td>{{ p.payment_date }}</td><td>{{ p.client_name }}</td><td><a href="{{ url_for('invoice_detail', id=p.invoice_id) }}">{{ p.invoice_number }}</a></td><td>{{ "{:,.2f}".format(p.amount) }}</td><td>{{ {'Cash':'نقد','Bank Transfer':'بینک ٹرانسفر','Cheque':'چیک','Online':'آن لائن'}.get(p.payment_method,p.payment_method) }}</td><td>{{ p.reference_no or '-' }}</td></tr>{% else %}<tr><td colspan="7" class="empty-state">ابھی کوئی ادائیگی درج نہیں کی گئی۔</td></tr>{% endfor %}</tbody></table></div>
 {% endblock %}
