@@ -20,27 +20,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p static/fonts
-          rm -f static/fonts/NotoNastaliqUrdu-Regular.ttf
-          rm -f static/fonts/OFL.txt
-
+          rm -f static/fonts/NotoNastaliqUrdu-Regular.ttf static/fonts/OFL.txt
           workdir="$(mktemp -d)"
           unzip -q static/css/Noto_Nastaliq_Urdu.zip -d "$workdir"
-
           font="$(find "$workdir" -type f \( -iname '*.ttf' -o -iname '*.otf' \) | head -n 1)"
-          if [ -z "$font" ]; then
-            echo "No TTF/OTF font file found in Noto_Nastaliq_Urdu.zip" >&2
-            exit 1
-          fi
-
-          case "$font" in
-            *.ttf|*.TTF) cp "$font" static/fonts/NotoNastaliqUrdu-Regular.ttf ;;
-            *) cp "$font" static/fonts/NotoNastaliqUrdu-Regular.ttf ;;
-          esac
-
+          if [ -z "$font" ]; then echo "No TTF/OTF font file found." >&2; exit 1; fi
+          cp "$font" static/fonts/NotoNastaliqUrdu-Regular.ttf
           license="$(find "$workdir" -type f \( -iname 'OFL.txt' -o -iname 'LICENSE*' \) | head -n 1 || true)"
-          if [ -n "$license" ]; then
-            cp "$license" static/fonts/OFL.txt
-          fi
+          if [ -n "$license" ]; then cp "$license" static/fonts/OFL.txt; fi
 
       - name: Configure local offline font
         shell: bash
@@ -50,11 +37,16 @@ jobs:
           from pathlib import Path
           p = Path('static/css/fonts.css')
           text = p.read_text(encoding='utf-8')
-          old = '''@font-face {\n  font-family: "Noto Nastaliq Urdu";\n  src: local("Noto Nastaliq Urdu"), local("Noto Nastaliq Urdu Regular");\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n}'''
-          new = '''@font-face {\n  font-family: "Noto Nastaliq Urdu";\n  src: url("../fonts/NotoNastaliqUrdu-Regular.ttf") format("truetype");\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n}'''
-          if old not in text:
-              raise SystemExit('Expected font-face block was not found')
-          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+          import re
+          block = '''@font-face {
+            font-family: "Noto Nastaliq Urdu";
+            src: url("../fonts/NotoNastaliqUrdu-Regular.ttf") format("truetype");
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+          }'''
+          text = re.sub(r'@font-face\s*\{.*?\}', block, text, count=1, flags=re.S)
+          p.write_text(text, encoding='utf-8')
           PY
 
       - name: Commit bundled font
@@ -64,9 +56,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add static/fonts static/css/fonts.css
-          if git diff --cached --quiet; then
-            echo "No font changes to commit."
-            exit 0
-          fi
+          if git diff --cached --quiet; then echo "No font changes to commit."; exit 0; fi
           git commit -m "Bundle Noto Nastaliq Urdu font for offline WEMS"
           git push
