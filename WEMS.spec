@@ -1,12 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 hiddenimports = [
+    "app",
+    "config",
+    "database",
+    "database.db",
     "sqlite3",
     "xhtml2pdf",
     "PIL",
 ]
+
+for package in ("flask", "werkzeug", "jinja2", "openpyxl", "xhtml2pdf", "reportlab", "PIL"):
+    try:
+        hiddenimports += collect_submodules(package)
+    except Exception:
+        pass
 
 binaries = []
 datas = [
