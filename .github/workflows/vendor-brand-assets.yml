@@ -1,0 +1,35 @@
+name: Vendor local brand assets
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-assets:
+    if: ${{ !contains(github.event.head_commit.message, '[skip assets]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out WEMS
+        uses: actions/checkout@v4
+
+      - name: Download portfolio assets
+        run: |
+          mkdir -p static/images
+          curl -L --fail --retry 3 -o static/images/waraq-logo.png "https://raw.githubusercontent.com/xl8saif/xl8saif.github.io/main/dist/images/waraq-logo.png"
+          curl -L --fail --retry 3 -o static/images/cloudtrans-logo.png "https://raw.githubusercontent.com/xl8saif/xl8saif.github.io/main/dist/images/CloudTrans-Logo%20-%20Copy.PNG"
+          curl -L --fail --retry 3 -o static/images/saif-ullah.jpg "https://raw.githubusercontent.com/xl8saif/xl8saif.github.io/main/dist/images/saif-ullah.jpg"
+
+      - name: Commit local assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add static/images/waraq-logo.png static/images/cloudtrans-logo.png static/images/saif-ullah.jpg
+          if git diff --cached --quiet; then
+            echo "Assets already up to date."
+          else
+            git commit -m "Add local WEMS branding assets [skip assets]"
+            git push
+          fi
