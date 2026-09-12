@@ -1,51 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Reports - WEMS{% endblock %}
-{% block page_title %}Business Reports{% endblock %}
+{% block title %}کاروباری رپورٹس — WEMS{% endblock %}
+{% block page_title %}کاروباری رپورٹس{% endblock %}
 {% block content %}
-<div class="page-actions">
-    <a href="{{ url_for('export_clients') }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Export Clients</a>
-    <a href="{{ url_for('export_invoices') }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Export Invoices</a>
-    <a href="{{ url_for('export_jobs') }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Export Jobs</a>
-</div>
-<div class="dashboard-row">
-    <div class="dashboard-card">
-        <h3><i class="fas fa-chart-pie"></i> Revenue by Category</h3>
-        <table class="data-table">
-            <thead><tr><th>Category</th><th>Jobs</th><th>Revenue</th></tr></thead>
-            <tbody>
-                {% for row in revenue_by_category %}
-                <tr><td>{{ row.category }}</td><td>{{ row.job_count }}</td><td>{{ "{:,.0f}".format(row.revenue) }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <div class="dashboard-card">
-        <h3><i class="fas fa-calendar"></i> Monthly Summary</h3>
-        <table class="data-table">
-            <thead><tr><th>Month</th><th>Invoices</th><th>Total</th><th>Collected</th><th>Pending</th></tr></thead>
-            <tbody>
-                {% for row in monthly_summary %}
-                <tr>
-                    <td>{{ row.month }}</td>
-                    <td>{{ row.invoice_count }}</td>
-                    <td>{{ "{:,.0f}".format(row.total) }}</td>
-                    <td>{{ "{:,.0f}".format(row.collected) }}</td>
-                    <td class="{% if row.pending > 0 %}text-danger{% endif %}">{{ "{:,.0f}".format(row.pending) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-<div class="dashboard-card">
-    <h3><i class="fas fa-wallet"></i> Expense Summary</h3>
-    <table class="data-table">
-        <thead><tr><th>Category</th><th>Total</th></tr></thead>
-        <tbody>
-            {% for row in expense_summary %}
-            <tr><td>{{ row.category }}</td><td>{{ "{:,.0f}".format(row.total) }}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<div class="page-actions"><div></div><div class="actions"><a href="{{ url_for('export_clients') }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> کلائنٹس برآمد کریں</a><a href="{{ url_for('export_invoices') }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> انوائسز برآمد کریں</a><a href="{{ url_for('export_jobs') }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> کام برآمد کریں</a></div></div>
+<div class="dashboard-row"><div class="dashboard-card"><div class="card-header"><h3><i class="fas fa-chart-pie"></i> زمرے کے لحاظ سے آمدن</h3></div><div class="card-body"><table class="data-table"><thead><tr><th>زمرہ</th><th>کام</th><th>آمدن</th></tr></thead><tbody>{% for row in revenue_by_category %}<tr><td>{{ category_labels.get(row.category,row.category) }}</td><td>{{ row.job_count }}</td><td>{{ "{:,.0f}".format(row.revenue) }}</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="dashboard-card"><div class="card-header"><h3><i class="fas fa-calendar"></i> ماہانہ خلاصہ</h3></div><div class="card-body"><table class="data-table"><thead><tr><th>ماہ</th><th>انوائسز</th><th>کل</th><th>وصول شدہ</th><th>زیرِ التوا</th></tr></thead><tbody>{% for row in monthly_summary %}<tr><td>{{ row.month }}</td><td>{{ row.invoice_count }}</td><td>{{ "{:,.0f}".format(row.total) }}</td><td>{{ "{:,.0f}".format(row.collected) }}</td><td class="{% if row.pending > 0 %}text-danger{% endif %}">{{ "{:,.0f}".format(row.pending) }}</td></tr>{% endfor %}</tbody></table></div></div></div>
+<div class="dashboard-card"><div class="card-header"><h3><i class="fas fa-wallet"></i> اخراجات کا خلاصہ</h3></div><div class="card-body"><table class="data-table"><thead><tr><th>زمرہ</th><th>کل رقم</th></tr></thead><tbody>{% for row in expense_summary %}<tr><td>{{ row.category }}</td><td>{{ "{:,.0f}".format(row.total) }}</td></tr>{% endfor %}</tbody></table></div></div>
 {% endblock %}
