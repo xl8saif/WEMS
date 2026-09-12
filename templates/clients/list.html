@@ -1,58 +1,23 @@
 {% extends "base.html" %}
-
-{% block title %}Clients - WEMS{% endblock %}
-{% block page_title %}Clients{% endblock %}
-
+{% block title %}کلائنٹس — WEMS{% endblock %}
+{% block page_title %}کلائنٹس{% endblock %}
 {% block content %}
 <div class="page-actions">
     <form class="search-form" method="get">
-        <input type="text" name="search" placeholder="Search clients..." value="{{ search }}" class="form-input">
+        <input type="text" name="search" placeholder="کلائنٹس تلاش کریں۔۔۔" value="{{ search }}" class="form-input">
         <select name="type" class="form-select">
-            <option value="">All Types</option>
-            <option value="Individual" {% if client_type == 'Individual' %}selected{% endif %}>Individual</option>
-            <option value="Business" {% if client_type == 'Business' %}selected{% endif %}>Business</option>
-            <option value="Government" {% if client_type == 'Government' %}selected{% endif %}>Government</option>
+            <option value="">تمام اقسام</option>
+            <option value="Individual" {% if client_type == 'Individual' %}selected{% endif %}>فرد</option>
+            <option value="Business" {% if client_type == 'Business' %}selected{% endif %}>کاروباری ادارہ</option>
+            <option value="Government" {% if client_type == 'Government' %}selected{% endif %}>سرکاری ادارہ</option>
         </select>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-        <a href="{{ url_for('clients_list') }}" class="btn btn-outline">Clear</a>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> تلاش</button>
+        <a href="{{ url_for('clients_list') }}" class="btn btn-outline">صاف کریں</a>
     </form>
-    <a href="{{ url_for('client_add') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add Client</a>
+    <a href="{{ url_for('client_add') }}" class="btn btn-success"><i class="fas fa-plus"></i> کلائنٹ شامل کریں</a>
 </div>
-
 <div class="card">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Contact Person</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Type</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for client in clients %}
-            <tr>
-                <td>{{ client.id }}</td>
-                <td><strong><a href="{{ url_for('client_detail', id=client.id) }}">{{ client.name }}</a></strong></td>
-                <td>{{ client.contact_person or '-' }}</td>
-                <td>{{ client.phone or '-' }}</td>
-                <td>{{ client.email or '-' }}</td>
-                <td><span class="badge">{{ client.client_type }}</span></td>
-                <td class="actions">
-                    <a href="{{ url_for('client_detail', id=client.id) }}" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>
-                    <a href="{{ url_for('client_edit', id=client.id) }}" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-edit"></i></a>
-                    <form action="{{ url_for('client_delete', id=client.id) }}" method="post" class="inline-form" onsubmit="return confirm('Delete this client?');">
-                        <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="7" class="empty-state">No clients found.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<table class="data-table"><thead><tr><th>شناختی نمبر</th><th>نام</th><th>رابطہ فرد</th><th>فون</th><th>ای میل</th><th>قسم</th><th>کارروائیاں</th></tr></thead>
+<tbody>{% for client in clients %}<tr><td>{{ client.id }}</td><td><strong><a href="{{ url_for('client_detail', id=client.id) }}">{{ client.name }}</a></strong></td><td>{{ client.contact_person or '-' }}</td><td>{{ client.phone or '-' }}</td><td>{{ client.email or '-' }}</td><td><span class="badge">{{ client_type_labels.get(client.client_type, client.client_type) }}</span></td><td class="actions"><a href="{{ url_for('client_detail', id=client.id) }}" class="btn btn-sm btn-info" title="دیکھیں"><i class="fas fa-eye"></i></a><a href="{{ url_for('client_edit', id=client.id) }}" class="btn btn-sm btn-warning" title="ترمیم"><i class="fas fa-edit"></i></a><form action="{{ url_for('client_delete', id=client.id) }}" method="post" class="inline-form" onsubmit="return confirm('کیا آپ اس کلائنٹ کو حذف کرنا چاہتے ہیں؟');"><button type="submit" class="btn btn-sm btn-danger" title="حذف"><i class="fas fa-trash"></i></button></form></td></tr>{% else %}<tr><td colspan="7" class="empty-state">کوئی کلائنٹ نہیں ملا۔</td></tr>{% endfor %}</tbody></table>
 </div>
 {% endblock %}
