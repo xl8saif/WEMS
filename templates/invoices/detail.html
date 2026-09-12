@@ -1,83 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Invoice {{ invoice.invoice_number }} - WEMS{% endblock %}
-{% block page_title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+{% block title %}انوائس {{ invoice.invoice_number }} — WEMS{% endblock %}
+{% block page_title %}انوائس {{ invoice.invoice_number }}{% endblock %}
 {% block content %}
-<div class="invoice-header-actions">
-    <a href="{{ url_for('invoice_pdf', id=invoice.id) }}" class="btn btn-primary" target="_blank"><i class="fas fa-file-pdf"></i> Download PDF</a>
-    <a href="{{ url_for('invoice_print', id=invoice.id) }}" class="btn btn-outline" target="_blank"><i class="fas fa-print"></i> Print View</a>
-</div>
-<div class="card invoice-card">
-    <div class="invoice-meta">
-        <div>
-            <p><strong>Client:</strong> {{ invoice.client_name }}</p>
-            <p><strong>Phone:</strong> {{ invoice.client_phone or 'N/A' }}</p>
-            <p><strong>Email:</strong> {{ invoice.client_email or 'N/A' }}</p>
-            <p><strong>Address:</strong> {{ invoice.client_address or 'N/A' }}</p>
-        </div>
-        <div class="invoice-meta-right">
-            <p><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
-            <p><strong>Issue Date:</strong> {{ invoice.issue_date }}</p>
-            <p><strong>Due Date:</strong> {{ invoice.due_date or 'N/A' }}</p>
-            <p><strong>Status:</strong> <span class="status-badge status-{{ invoice.status|lower }}">{{ invoice.status }}</span></p>
-        </div>
-    </div>
-    <table class="data-table invoice-items">
-        <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
-        <tbody>
-            {% for item in items %}
-            <tr><td>{{ loop.index }}</td><td>{{ item.description }}</td><td>{{ item.quantity }}</td><td>{{ "{:,.2f}".format(item.unit_price) }}</td><td>{{ "{:,.2f}".format(item.total_price) }}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <div class="invoice-totals">
-        <div class="total-row"><span>Subtotal:</span><span>{{ "{:,.2f}".format(invoice.subtotal) }} {{ currency }}</span></div>
-        <div class="total-row"><span>Tax:</span><span>{{ "{:,.2f}".format(invoice.tax_amount) }} {{ currency }}</span></div>
-        <div class="total-row"><span>Discount:</span><span>{{ "{:,.2f}".format(invoice.discount) }} {{ currency }}</span></div>
-        <div class="total-row grand"><span>Total:</span><span>{{ "{:,.2f}".format(invoice.total_amount) }} {{ currency }}</span></div>
-        <div class="total-row"><span>Paid:</span><span>{{ "{:,.2f}".format(invoice.paid_amount) }} {{ currency }}</span></div>
-        <div class="total-row balance"><span>Balance Due:</span><span>{{ "{:,.2f}".format(invoice.balance_due) }} {{ currency }}</span></div>
-    </div>
-</div>
-{% if invoice.status != 'Paid' %}
-<div class="card payment-form-card">
-    <h3><i class="fas fa-money-bill-wave"></i> Record Payment</h3>
-    <form method="post" action="{{ url_for('payment_add') }}">
-        <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
-        <input type="hidden" name="client_id" value="{{ invoice.client_id }}">
-        <div class="form-row">
-            <div class="form-group">
-                <label>Amount ({{ currency }})</label>
-                <input type="number" name="amount" step="0.01" max="{{ invoice.balance_due }}" required class="form-input">
-            </div>
-            <div class="form-group">
-                <label>Payment Date</label>
-                <input type="date" name="payment_date" required class="form-input">
-            </div>
-            <div class="form-group">
-                <label>Method</label>
-                <select name="payment_method" class="form-select"><option>Cash</option><option>Bank Transfer</option><option>Cheque</option><option>Online</option></select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Reference #</label>
-            <input type="text" name="reference_no" class="form-input">
-        </div>
-        <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Record Payment</button>
-    </form>
-</div>
-<script>document.querySelector('input[name="payment_date"]').valueAsDate = new Date();</script>
-{% endif %}
-{% if payments %}
-<div class="card">
-    <h3><i class="fas fa-history"></i> Payment History</h3>
-    <table class="data-table">
-        <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead>
-        <tbody>
-            {% for p in payments %}
-            <tr><td>{{ p.payment_date }}</td><td>{{ "{:,.2f}".format(p.amount) }}</td><td>{{ p.payment_method }}</td><td>{{ p.reference_no or '-' }}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
+<div class="invoice-header-actions"><a href="{{ url_for('invoice_pdf', id=invoice.id) }}" class="btn btn-primary" target="_blank"><i class="fas fa-file-pdf"></i> پی ڈی ایف حاصل کریں</a><a href="{{ url_for('invoice_print', id=invoice.id) }}" class="btn btn-outline" target="_blank"><i class="fas fa-print"></i> پرنٹ منظر</a></div>
+<div class="card invoice-card"><div class="invoice-meta"><div><p><strong>کلائنٹ:</strong> {{ invoice.client_name }}</p><p><strong>فون:</strong> {{ invoice.client_phone or 'دستیاب نہیں' }}</p><p><strong>ای میل:</strong> {{ invoice.client_email or 'دستیاب نہیں' }}</p><p><strong>پتہ:</strong> {{ invoice.client_address or 'دستیاب نہیں' }}</p></div><div class="invoice-meta-right"><p><strong>انوائس نمبر:</strong> {{ invoice.invoice_number }}</p><p><strong>اجراء کی تاریخ:</strong> {{ invoice.issue_date }}</p><p><strong>آخری تاریخ:</strong> {{ invoice.due_date or 'مقرر نہیں' }}</p><p><strong>حیثیت:</strong> <span class="status-badge status-{{ invoice.status|lower }}">{{ status_labels.get(invoice.status, invoice.status) }}</span></p></div></div>
+<table class="data-table invoice-items"><thead><tr><th>#</th><th>تفصیل</th><th>مقدار</th><th>فی یونٹ قیمت</th><th>رقم</th></tr></thead><tbody>{% for item in items %}<tr><td>{{ loop.index }}</td><td>{{ item.description }}</td><td>{{ item.quantity }}</td><td>{{ "{:,.2f}".format(item.unit_price) }}</td><td>{{ "{:,.2f}".format(item.total_price) }}</td></tr>{% endfor %}</tbody></table>
+<div class="invoice-totals"><div class="total-row"><span>ذیلی مجموعہ:</span><span>{{ "{:,.2f}".format(invoice.subtotal) }} {{ currency }}</span></div><div class="total-row"><span>ٹیکس:</span><span>{{ "{:,.2f}".format(invoice.tax_amount) }} {{ currency }}</span></div><div class="total-row"><span>رعایت:</span><span>{{ "{:,.2f}".format(invoice.discount) }} {{ currency }}</span></div><div class="total-row grand"><span>کل رقم:</span><span>{{ "{:,.2f}".format(invoice.total_amount) }} {{ currency }}</span></div><div class="total-row"><span>ادا شدہ:</span><span>{{ "{:,.2f}".format(invoice.paid_amount) }} {{ currency }}</span></div><div class="total-row balance"><span>قابلِ ادائیگی بقایا:</span><span>{{ "{:,.2f}".format(invoice.balance_due) }} {{ currency }}</span></div></div></div>
+{% if invoice.status != 'Paid' %}<div class="card payment-form-card"><h3><i class="fas fa-money-bill-wave"></i> ادائیگی درج کریں</h3><form method="post" action="{{ url_for('payment_add') }}"><input type="hidden" name="invoice_id" value="{{ invoice.id }}"><input type="hidden" name="client_id" value="{{ invoice.client_id }}"><div class="form-row"><div class="form-group"><label>رقم ({{ currency }})</label><input type="number" name="amount" step="0.01" max="{{ invoice.balance_due }}" required class="form-input" dir="ltr"></div><div class="form-group"><label>ادائیگی کی تاریخ</label><input type="date" name="payment_date" required class="form-input" dir="ltr"></div><div class="form-group"><label>طریقۂ ادائیگی</label><select name="payment_method" class="form-select"><option>Cash</option><option>Bank Transfer</option><option>Cheque</option><option>Online</option></select></div></div><div class="form-group"><label>حوالہ نمبر</label><input type="text" name="reference_no" class="form-input"></div><button type="submit" class="btn btn-success"><i class="fas fa-check"></i> ادائیگی درج کریں</button></form></div><script>document.querySelector('input[name="payment_date"]').valueAsDate=new Date();</script>{% endif %}
+{% if payments %}<div class="card"><h3><i class="fas fa-history"></i> ادائیگیوں کی تاریخ</h3><table class="data-table"><thead><tr><th>تاریخ</th><th>رقم</th><th>طریقہ</th><th>حوالہ</th></tr></thead><tbody>{% for p in payments %}<tr><td>{{ p.payment_date }}</td><td>{{ "{:,.2f}".format(p.amount) }}</td><td>{{ {'Cash':'نقد','Bank Transfer':'بینک ٹرانسفر','Cheque':'چیک','Online':'آن لائن'}.get(p.payment_method,p.payment_method) }}</td><td>{{ p.reference_no or '-' }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
 {% endblock %}
