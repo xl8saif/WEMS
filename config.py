@@ -1,13 +1,14 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.environ.get("WEMS_DATA_DIR") or BASE_DIR
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'waraq-secret-key-2024'
-    DATABASE = os.path.join(BASE_DIR, 'database', 'waraq.db')
-    INVOICE_DIR = os.path.join(BASE_DIR, 'invoices')
-    EXPORT_DIR = os.path.join(BASE_DIR, 'exports')
-    BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
+    DATABASE = os.path.join(DATA_DIR, 'database', 'waraq.db')
+    INVOICE_DIR = os.path.join(DATA_DIR, 'invoices')
+    EXPORT_DIR = os.path.join(DATA_DIR, 'exports')
+    BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
     STATIC_IMAGE_DIR = os.path.join(BASE_DIR, 'static', 'images')
 
     COMPANY_NAME = "Waraq Enterprises"
