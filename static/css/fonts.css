@@ -1,0 +1,36 @@
+@font-face {
+  font-family: "Noto Nastaliq Urdu";
+  src: local("Noto Nastaliq Urdu"), local("Noto Nastaliq Urdu Regular");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Prefer the locally installed Noto Nastaliq Urdu font. The app remains
+   network-independent; no web-font request is made at runtime. */
+:root {
+  --urdu-font: "Noto Nastaliq Urdu", "Noto Nastaliq", "Jameel Noori Nastaleeq", serif;
+}
+
+html[dir="rtl"] body,
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select,
+html[dir="rtl"] button,
+html[dir="rtl"] table,
+html[dir="rtl"] .card,
+html[dir="rtl"] .modal,
+html[dir="rtl"] .nav-item,
+html[dir="rtl"] .brand-copy,
+html[dir="rtl"] .flash-message {
+  font-family: var(--urdu-font);
+}
+
+/* Keep the lightweight offline icon glyphs out of the Nastaliq font. */
+.fas,
+.far,
+.fab,
+[class^="fa-"],
+[class*=" fa-"] {
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif !important;
+}
