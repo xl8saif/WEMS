@@ -1,0 +1,96 @@
+/* WEMS visual identity */
+.wems-brand {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+}
+
+.brand-logo-right { justify-content: flex-end; }
+.brand-logo-left { justify-content: flex-start; }
+
+.brand-logo img {
+  display: block;
+  width: auto;
+  max-width: 180px;
+  height: 82px;
+  object-fit: contain;
+}
+
+.brand-copy {
+  min-width: 0;
+  text-align: center;
+  line-height: 1.65;
+}
+
+.brand-title {
+  font-size: clamp(1.15rem, 2vw, 1.8rem);
+  font-weight: 700;
+}
+
+.brand-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.profile-avatar,
+.profile-avatar img,
+.profile-photo,
+.profile-photo img {
+  border-radius: 0 !important;
+}
+
+.profile-avatar img,
+.profile-photo img {
+  object-fit: contain !important;
+}
+
+.waraq-document-signature {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0,0,0,.15);
+}
+
+.waraq-document-signature .stamp {
+  width: 115px;
+  height: 115px;
+  object-fit: contain;
+}
+
+.waraq-document-signature .signature {
+  width: 190px;
+  max-height: 85px;
+  object-fit: contain;
+}
+
+.waraq-document-signature .authorized-label {
+  font-size: .85rem;
+  margin-top: .35rem;
+}
+
+@media (max-width: 700px) {
+  .wems-brand {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .brand-copy {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    order: -1;
+  }
+
+  .brand-logo img {
+    height: 62px;
+    max-width: 135px;
+  }
+}
