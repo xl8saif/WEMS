@@ -176,7 +176,25 @@ html[dir="rtl"] .profile-hero { flex-direction:row-reverse; text-align:right; }
 .li-add-form { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
 .li-add-form .form-input { flex:1; min-width:220px; }
 .li-hint { color:var(--secondary, #C9D6EE); font-size:12px; margin-top:6px; opacity:.85; }
-@media (max-width:640px){ .linkedin-embeds { grid-template-columns:1fr; } }
+/* Hero as a 3-zone grid when the LinkedIn zone exists: portrait | text | posts.
+   Grid auto-flips with document direction, so Urdu mirrors it for free. */
+.profile-hero.has-linkedin { display:grid; grid-template-columns:auto minmax(0,1fr) 360px; align-items:center; }
+.profile-hero.has-linkedin .profile-main h2 { font-size:22px; }
+.profile-hero.has-linkedin .profile-summary { font-size:13.5px; }
+.profile-linkedin { min-width:0; display:flex; flex-direction:column; gap:10px; }
+.profile-hero.has-linkedin .profile-linkedin { max-height:560px; overflow-y:auto; }
+.profile-linkedin .linkedin-embeds { grid-template-columns:1fr; }
+.li-empty-note { color:var(--secondary, #C9D6EE); font-size:12.5px; opacity:.85; margin:4px 0 0; }
+/* Reflow once the row gets tight: everything stacks, embeds spread full width */
+@media (max-width:1200px){
+  .profile-hero.has-linkedin { grid-template-columns:1fr; align-items:stretch; }
+  .profile-hero.has-linkedin .profile-portrait { margin-inline:auto; }
+  .profile-hero.has-linkedin .profile-linkedin { max-height:none; overflow:visible; }
+  .profile-linkedin .linkedin-embeds { grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); }
+}
+@media (max-width:640px){
+  .profile-linkedin .linkedin-embeds { grid-template-columns:1fr; }
+}
 /* Social icon-button chips: brand-colored icon disc + label on a glass pill */
 .social-btn { display:inline-flex; align-items:center; gap:8px; padding:5px 12px 5px 6px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid var(--glass-border); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); color:var(--primary); font-size:13px; text-decoration:none; transition:all .2s; }
 .social-btn .social-icon { width:26px; height:26px; border-radius:50%; background:var(--brand, var(--accent)); color:white; display:inline-flex; align-items:center; justify-content:center; font-size:13px; flex:none; }

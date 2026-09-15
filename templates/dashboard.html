@@ -4,7 +4,7 @@
 {% block page_title %}ڈیش بورڈ{% endblock %}
 
 {% block content %}
-<div class="profile-hero">
+<div class="profile-hero{% if li_posts or (current_user and current_user['role'] == 'admin') %} has-linkedin{% endif %}">
     <img class="profile-portrait" src="{{ url_for('static', filename='images/saif-portrait.jpg') }}" alt="سید سیف اللہ جیلانی">
     <div class="profile-main">
         <div class="profile-kicker">ڈویلپر کا تعارف</div>
@@ -22,6 +22,9 @@
             <a class="social-btn" style="--brand:#2c3e50" href="https://xl8saif.github.io/" target="_blank" rel="noopener" aria-label="Website" title="Website"><span class="social-icon"><i class="fas fa-globe"></i></span><span class="social-label">ویب سائٹ</span></a>
         </div>
         <p class="profile-location"><i class="fas fa-map-marker-alt"></i> ورق انٹرپرائزز، کورٹ ایریا، یونیورسٹی روڈ، کونوداس، گلگت، پاکستان</p>
+    </div>
+    {% if li_posts or (current_user and current_user['role'] == 'admin') %}
+    <aside class="profile-linkedin">
         {% if li_posts %}
         <div class="linkedin-posts">
             <div class="linkedin-posts-title"><i class="fab fa-linkedin"></i> لنکڈ ان سے تازہ</div>
@@ -38,6 +41,11 @@
                 {% endfor %}
             </div>
         </div>
+        {% else %}
+        <div class="linkedin-posts">
+            <div class="linkedin-posts-title"><i class="fab fa-linkedin"></i> لنکڈ ان سے تازہ</div>
+            <p class="li-empty-note">ابھی کوئی پوسٹ پن نہیں کی گئی۔</p>
+        </div>
         {% endif %}
         {% if current_user and current_user['role'] == 'admin' %}
         <details class="li-manage">
@@ -49,7 +57,8 @@
             <p class="li-hint">لنکڈ ان پر پوسٹ کھولیں → سب سے اوپر … مینو → "Copy link to post" → یہاں پیسٹ کریں۔ زیادہ سے زیادہ 4 پوسٹس۔</p>
         </details>
         {% endif %}
-    </div>
+    </aside>
+    {% endif %}
 </div>
 
 <div class="stats-grid">
