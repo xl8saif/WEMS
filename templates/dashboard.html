@@ -22,6 +22,33 @@
             <a class="social-btn" style="--brand:#2c3e50" href="https://xl8saif.github.io/" target="_blank" rel="noopener" aria-label="Website" title="Website"><span class="social-icon"><i class="fas fa-globe"></i></span><span class="social-label">ویب سائٹ</span></a>
         </div>
         <p class="profile-location"><i class="fas fa-map-marker-alt"></i> ورق انٹرپرائزز، کورٹ ایریا، یونیورسٹی روڈ، کونوداس، گلگت، پاکستان</p>
+        {% if li_posts %}
+        <div class="linkedin-posts">
+            <div class="linkedin-posts-title"><i class="fab fa-linkedin"></i> لنکڈ ان سے تازہ</div>
+            <div class="linkedin-embeds">
+                {% for aid in li_posts %}
+                <div class="linkedin-embed-wrap">
+                    {% if current_user and current_user['role'] == 'admin' %}
+                    <form method="post" action="{{ url_for('linkedin_remove', aid=aid) }}" class="li-remove-form" onsubmit="return confirm('ہٹانا ہے؟ Remove this post?')">
+                        <button type="submit" class="li-remove-btn" title="ہٹائیں / Remove">✕</button>
+                    </form>
+                    {% endif %}
+                    <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:activity:{{ aid }}" height="420" width="100%" frameborder="0" allowfullscreen="" title="LinkedIn post {{ aid }}" loading="lazy"></iframe>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if current_user and current_user['role'] == 'admin' %}
+        <details class="li-manage">
+            <summary><i class="fab fa-linkedin"></i> لنکڈ ان پوسٹس منظم کریں</summary>
+            <form method="post" action="{{ url_for('linkedin_add') }}" class="li-add-form">
+                <input type="url" name="url" class="form-input" placeholder="https://www.linkedin.com/feed/update/urn:li:activity:7..." required>
+                <button type="submit" class="btn btn-primary btn-sm">شامل کریں</button>
+            </form>
+            <p class="li-hint">لنکڈ ان پر پوسٹ کھولیں → سب سے اوپر … مینو → "Copy link to post" → یہاں پیسٹ کریں۔ زیادہ سے زیادہ 4 پوسٹس۔</p>
+        </details>
+        {% endif %}
     </div>
 </div>
 

@@ -166,6 +166,14 @@ def init_db():
         cursor.execute("ALTER TABLE user_profile ADD COLUMN user_id INTEGER")
         cursor.execute("DELETE FROM user_profile WHERE user_id IS NULL")
 
+    # Simple key/value settings store (e.g. pinned LinkedIn posts)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+
     # Insert default services if empty
     cursor.execute("SELECT COUNT(*) FROM services")
     if cursor.fetchone()[0] == 0:
@@ -270,3 +278,23 @@ def get_outstanding_clients():
     """).fetchall()
     conn.close()
     return clients
+
+
+def get_setting(key, default=''):
+    """Read a value from the app_settings key/value store."""
+    conn = get_db_connection()
+    row = conn.execute("SELECT value FROM app_settings WHERE key = ?", (key,)).fetchone()
+    conn.close()
+    return row['value'] if row and row['value'] is not None else default
+
+
+def set_setting(key, value):
+    """Write a value to the app_settings key/value store."""
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO app_settings (key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
+    )
+    conn.commit()
+    conn.close()

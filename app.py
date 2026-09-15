@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import shutil
 import glob as globmod
 import hmac
@@ -23,6 +24,8 @@ from database.db import (
     get_recent_invoices,
     get_monthly_revenue,
     get_outstanding_clients,
+    get_setting,
+    set_setting,
 )
 
 app = Flask(__name__)
@@ -314,6 +317,14 @@ def parse_float(value, field_label, default=None):
 
 # ==================== DASHBOARD ====================
 
+def _parse_linkedin_activity(url):
+    """Extract the numeric activity ID from a LinkedIn post URL.
+    Accepts every common form: /feed/update/urn:li:activity:ID,
+    /embed/feed/update/urn:li:activity:ID, /posts/slug-activity-ID,
+    /activity:ID and /share/... ; returns the digits or None."""
+    m = re.search(r'(?:activity|share)[:\-/]+(\d{15,25})', url or '')
+    return m.group(1) if m else None
+
 @app.route("/")
 def dashboard():
     stats = get_stats()
@@ -324,6 +335,9 @@ def dashboard():
     months = [row["month"] for row in reversed(monthly_data)]
     revenues = [float(row["revenue"]) for row in reversed(monthly_data)]
     collected = [float(row["collected"]) for row in reversed(monthly_data)]
+    # Pinned LinkedIn posts shown in the developer card (admin-managed).
+    li_raw = get_setting('linkedin_posts', '')
+    li_posts = [a for a in li_raw.split(',') if a.strip()][:4]
     return render_template(
         "dashboard.html",
         stats=stats,
@@ -333,6 +347,7 @@ def dashboard():
         months=months,
         revenues=revenues,
         collected=collected,
+        li_posts=li_posts,
     )
 
 
@@ -1159,6 +1174,39 @@ def users_delete(uid):
     conn.close()
     flash('Service deleted!', 'success')
     return redirect(url_for('users_list'))
+
+# ==================== LINKEDIN POSTS (developer card) ====================
+
+@app.route('/linkedin/posts/add', methods=['POST'])
+def linkedin_add():
+    if not _require_admin():
+        flash('صرف ایڈمن کے لیے۔ Admins only.', 'error')
+        return redirect(url_for('dashboard'))
+    url = (request.form.get('url') or '').strip()
+    aid = _parse_linkedin_activity(url)
+    if not aid:
+        flash(
+            'یہ لنکڈ ان پوسٹ کا لنک نہیں۔ LinkedIn post link required.',
+            'error',
+        )
+        return redirect(url_for('dashboard'))
+    current = [a for a in get_setting('linkedin_posts', '').split(',') if a.strip()]
+    if aid not in current:
+        current.insert(0, aid)
+    set_setting('linkedin_posts', ','.join(current[:4]))
+    flash('لنکڈ ان پوسٹ شامل ہو گئی۔ LinkedIn post added.', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/linkedin/posts/remove/<aid>', methods=['POST'])
+def linkedin_remove(aid):
+    if not _require_admin():
+        flash('صرف ایڈمن کے لیے۔ Admins only.', 'error')
+        return redirect(url_for('dashboard'))
+    current = [a for a in get_setting('linkedin_posts', '').split(',') if a.strip()]
+    current = [a for a in current if a != aid]
+    set_setting('linkedin_posts', ','.join(current))
+    flash('لنکڈ ان پوسٹ ہٹا دی گئی۔ LinkedIn post removed.', 'success')
+    return redirect(url_for('dashboard'))
 
 # ==================== CHANGE OWN PASSWORD ====================
 
