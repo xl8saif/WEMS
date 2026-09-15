@@ -5,8 +5,31 @@
 */
 (function () {
   const U = {
-    'ورق انٹرپرائز مینجمنٹ سسٹم': 'Waraq Enterprise Management System',
+    'ورق انٹرپرائزز مینجمنٹ سسٹم': 'Waraq Enterprises Management System',
+    'ورق انٹرپرائز مینجمنٹ سسٹم': 'Waraq Enterprises Management System',
+    'ورق انٹرپرائزز': 'Waraq Enterprises',
     'ورق انٹرپرائزز، گلگت کا منصوبہ': 'A project of Waraq Enterprises, Gilgit',
+    'ڈویلپر کا تعارف': 'About the Developer',
+    'صارفین': 'Users', 'نیا صارف شامل کریں': 'Add New User', 'صارف نام': 'Username', 'پورا نام': 'Full Name',
+    'کردار': 'Role', 'ایڈمین': 'Admin', 'عملہ': 'Staff', 'فعال': 'Active', 'بند': 'Disabled', 'بند کریں': 'Disable', 'چالو کریں': 'Enable',
+    'پاس ورڈ ری سیٹ': 'Reset Password', 'نیا پاس ورڈ': 'New Password', 'موجودہ پاس ورڈ': 'Current Password',
+    'پاس ورڈ تبدیل کریں': 'Change Password', 'نیا پاس ورڈ دوبارہ': 'Confirm New Password', 'پاس ورڈ دوبارہ': 'Confirm Password',
+    'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔': 'Password must be at least 6 characters.',
+    'پاس ورڈز مشابہ نہیں ہیں۔': 'Passwords do not match.',
+    'یہ صارف نام پہلے سے موجود ہے۔': 'Username already exists.',
+    'غلط صارف نام یا پاس ورڈ۔': 'Invalid username or password.',
+    'ایڈمین اکاؤنٹ بنا دیا گیا۔ اب داخل ہوں۔': 'Admin account created. Please sign in.',
+    'ابتدائی ترتیب': 'Initial Setup', 'ایکاؤنٹ بنائیں': 'Create Account',
+    '(آپ)': '(you)', 'اپ لوڈز': 'Uploads',
+    'پروفائل': 'Profile', 'میری پروفائل': 'My Profile', 'پروفائل دیکھیں': 'View Profile', 'پروفائل میں ترمیم': 'Edit Profile',
+    'صارف پروفائل': 'User Profile', 'ذاتی پروفائل': 'Personal Profile',
+    'پورا نام': 'Full Name', 'ای میل': 'Email', 'تاریخِ پیدائش': 'Date of Birth', 'موبائل نمبر': 'Mobile Number',
+    'سوشل میڈیا': 'Social Media', 'ہنر': 'Skills', 'ہنر کا انتخاب کریں': 'Select Skills', 'سی وی اپ لوڈ کریں': 'Upload CV',
+    'تعارف': 'Summary', 'سوانح حیات': 'CV / Resume', 'ڈاؤن لوڈ کریں': 'Download', 'تصویر اپ لوڈ کریں': 'Upload Photo',
+    'محفوظ پروفائل': 'Save Profile', 'صرف تصویری فائلیں (PNG، JPG، WEBP) تصویر کے لیے جائز ہیں۔': 'Only image files (PNG, JPG, WEBP) are allowed for the photo.',
+    'صرف پی ڈی ایف یا ورڈ دستاویز سی وی کے لیے جائز ہے۔': 'Only PDF or Word documents are allowed for the CV.',
+    'ہنر منتخب نہیں کیا گیا۔': 'No skills selected yet.', 'سوشل ہینڈل درج نہیں۔': 'No social handles added yet.',
+    'کلاؤڈ ٹرانس کی تکنیکی معاونت — ڈیجیٹل حل کا معروف پلیٹ فارم': 'Technical Assistance of CloudTrans — a leading digital solutions platform',
     'ورق انٹرپرائزز، گلگت': 'Waraq Enterprises, Gilgit',
     'ورق انٹرپرائزز، گلگت — WEMS v1.0': 'Waraq Enterprises, Gilgit — WEMS v1.0',
     'سید سیف اللہ جیلانی': 'Saif Ullah Jailani',
@@ -70,9 +93,36 @@
     'کام کامیابی سے بنا دیا گیا۔': 'Job created successfully.', 'کام کامیابی سے اپ ڈیٹ کر دیا گیا۔': 'Job updated successfully.',
     'کام کامیابی سے حذف کر دیا گیا۔': 'Job deleted successfully.', 'ادائیگی کامیابی سے درج کر دی گئی۔': 'Payment recorded successfully.',
     'انوائس کامیابی سے حذف کر دی گئی۔': 'Invoice deleted successfully.', 'پی ڈی ایف تیار کرتے وقت خرابی پیش آئی۔': 'Error generating PDF.',
-    'تیار کردہ:': 'Developed by:', 'تیار کردہ': 'Developed by', 'ویب سائٹ': 'Website', 'پروفائل': 'Profile', 'مینو کھولیں': 'Open menu',
+    'تیار کردہ:': 'Developed by:', 'تیار کردہ': 'Developed by', 'ویب سائٹ': 'Website', 'پروفائل': 'Profile', 'مینو کھولیں': 'Open menu', 'مینو بند کریں': 'Close menu',
+    'سینئر مترجم، لوکلائزیشن اسپیشلسٹ اور لینگویج ٹیکنالوجی ماہر': 'Senior Translator, Localization Specialist & Language Technology Expert',
+    '12+ سالہ پیشہ ورانہ تجربہ، 3,500+ منصوبے؛ قانونی، مذہبی، کارپوریٹ، تکنیکی، تعلیمی، میڈیکل، حکومتی اور گیم لوکلائزیشن میں ترجمہ، MTPE، LQA، لسانی جانچ اور کثیر لسانی مواد کی تیاری۔ اردو مادری زبان؛ عربی، فارسی، انگریزی اور علاقائی زبانوں میں عملی مہارت، بشمول انڈس کوہستانی اور شینا۔': '12+ years of professional experience across 3,500+ projects: translation, MTPE, LQA, linguistic testing and multilingual content preparation in legal, religious, corporate, technical, educational, medical, government and game localization. Native Urdu; working proficiency in Arabic, Persian, English and regional languages including Indus Kohistani and Shina.',
+    'ورق انٹرپرائزز، کورٹ ایریا، یونیورسٹی روڈ، کونوداس، گلگت، پاکستان': 'Waraq Enterprises, Court Area, University Road, Konodas, Gilgit, Pakistan',
     '-- کوئی نہیں --': '-- None --', '-- کلائنٹ منتخب کریں --': '-- Select Client --', '-- خدمت منتخب کریں --': '-- Select Service --',
-    'انوائس {{': 'Invoice {{'
+    'انوائس {{': 'Invoice {{',
+    'اخراجات': 'Expenses', 'دفتری اخراجات': 'Office Expenses', 'خرچ': 'Expense',
+    'خرچ شامل کریں': 'Add Expense', 'نیا خرچ شامل کریں': 'Add New Expense',
+    'اس ماہ کے اخراجات': 'This Month Expenses', 'کل اخراجات': 'Total Expenses',
+    'ادا کرنے والا': 'Paid By', 'فلٹر کریں': 'Filter', 'لاگ آؤٹ': 'Logout',
+    'پاس ورڈ': 'Password', 'داخل ہوں': 'Sign In', 'لاگ ان': 'Login',
+    'ابھی کوئی خرچ درج نہیں ہوا۔': 'No expenses recorded yet.',
+    'کیا آپ یہ خرچ حذف کرنا چاہتے ہیں؟': 'Are you sure you want to delete this expense?',
+    'محفوظ دفتری نظام — براہِ کرم پاس ورڈ درج کریں': 'Secure office system — please enter your password',
+    'مثلاً: کرایہ، کاغذات، ٹرانسپورٹ': 'e.g., Rent, Stationery, Transport',
+    'غلط پاس ورڈ۔ دوبارہ کوشش کریں۔ Invalid password.': 'Invalid password. Please try again.',
+    'خرچ کامیابی سے شامل کر دیا گیا۔': 'Expense added successfully.',
+    'خرچ کامیابی سے حذف کر دیا گیا۔': 'Expense deleted successfully.',
+    'خرچ کا زمرہ لازمی ہے۔': 'Expense category is required.',
+    'خرچ کی رقم مثبت ہونی چاہیے۔': 'Expense amount must be a positive number.',
+    'ادائیگی کی رقم مثبت ہونی چاہیے۔': 'Payment amount must be a positive number.',
+    'براہِ کرم کلائنٹ منتخب کریں۔': 'Please select a client.',
+    'کلائنٹ کا نام لازمی ہے۔': 'Client name is required.',
+    'کلائنٹ اور کام کا عنوان لازمی ہے۔': 'Client and job title are required.',
+    'خدمت کا نام اور زمرہ لازمی ہے۔': 'Service name and category are required.',
+    'انوائس نہیں ملی۔': 'Invoice not found.',
+    'اس کلائنٹ کے انوائسز موجود ہیں، اس لیے حذف نہیں کیا جا سکتا۔ پہلے ان کے انوائسز حذف یا دوبارہ منتقل کریں۔': 'This client has invoices and cannot be deleted. Delete or reassign their invoices first.',
+    'اس کلائنٹ کے کام موجود ہیں، اس لیے حذف نہیں کیا جا سکتا۔ پہلے اس کے کام حذف کریں۔': 'This client has jobs and cannot be deleted. Delete their jobs first.',
+    'اس کام کی انوائسز منسلک ہیں، اس لیے حذف نہیں کیا جا سکتا۔': 'This job has invoices linked to it and cannot be deleted.',
+    'اس انوائس کے خلاف ادائیگیاں درج ہیں، اس لیے حذف نہیں کی جا سکتی۔ پہلے ادائیگیاں حذف کریں۔': 'This invoice has payments recorded and cannot be deleted. Delete its payments first.'
   };
 
   const E = Object.fromEntries(Object.entries(U).map(([u, e]) => [e, u]));
@@ -105,7 +155,7 @@
   }
 
   function translateElementAttributes(el, lang) {
-    ['placeholder', 'title', 'aria-label', 'value'].forEach(attr => {
+    ['placeholder', 'title', 'aria-label', 'value', 'alt'].forEach(attr => {
       if (el.hasAttribute(attr)) {
         const old = el.getAttribute(attr);
         const next = translateValue(old, lang);
@@ -137,6 +187,9 @@
     document.querySelectorAll('input, textarea, select, button, a, [title], [aria-label]').forEach(el => translateElementAttributes(el, lang));
 
     localStorage.setItem('wems-language', lang);
+    // Mirror the choice into a cookie so server-rendered documents
+    // (invoice print view / PDF) come out in the same language.
+    document.cookie = 'wems-lang=' + lang + ';path=/;max-age=31536000;samesite=strict';
     translating = false;
   }
 

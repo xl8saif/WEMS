@@ -1,0 +1,25 @@
+# Private business data - NEVER upload these
+database/*.db
+database/waraq.db
+invoices/
+exports/
+backups/
+# NOTE: static/images/ is NOT ignored — it holds brand assets (logos, portrait,
+# theme ornament) that ARE tracked and must ship with the repo. Only the private
+# data folders above are excluded.
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store
+# User-uploaded CVs (private documents)
+uploads/

@@ -1,11 +1,15 @@
 import os
 import io
-import base64
+import shutil
+import glob as globmod
+import hmac
 from datetime import datetime, timedelta
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, make_response, session
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+import sqlite3
 from xhtml2pdf import pisa
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -21,12 +25,187 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
 
+# ==================== DOCUMENT LANGUAGE ====================
+# Printable documents (invoice print view / PDF) follow the UI language.
+# i18n.js mirrors the toggle choice into the `wems-lang` cookie; the server
+# reads it here so server-rendered PDFs come out in the same language.
+
+def get_doc_lang():
+    return 'en' if request.cookies.get('wems-lang') == 'en' else 'ur'
+
+def get_static_image_path(filename):
+    """Absolute filesystem path to a bundled static image (for xhtml2pdf)."""
+    return os.path.join(app.root_path, 'static', 'images', filename)
+
+def _pdf_link_callback(uri, rel):
+    """Map relative font/image URLs in the PDF template to real files.
+    Without this, xhtml2pdf resolves them against the process CWD and fails
+    on Windows (empty temp copy that reportlab cannot open)."""
+    if uri.startswith(('static/', '/static/')):
+        return os.path.join(app.root_path, uri.lstrip('/').replace('/', os.sep))
+    return uri
+
+_urdu_pdf_font_ready = False
+
+def _ensure_urdu_pdf_font():
+    """Register the Nastaliq font with reportlab directly, bypassing
+    xhtml2pdf's @font-face loader which breaks on Windows (it copies the TTF
+    to a locked temp file that reportlab cannot re-open). The PDF template's
+    CSS then just references the pre-registered family name."""
+    global _urdu_pdf_font_ready
+    if _urdu_pdf_font_ready:
+        return
+    try:
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont as RLTTFont
+        from xhtml2pdf import default as pisa_default
+        font_path = os.path.join(app.root_path, 'static', 'fonts', 'NotoNastaliqUrdu-Regular.ttf')
+        pdfmetrics.registerFont(RLTTFont('NotoNastaliqUrdu', font_path))
+        pisa_default.DEFAULT_FONT['notonastaliqurdu'] = 'NotoNastaliqUrdu'
+        _urdu_pdf_font_ready = True
+    except Exception:
+        pass  # PDF still generates with the fallback font
+
 # Ensure directories exist
 for directory in [Config.INVOICE_DIR, Config.EXPORT_DIR, Config.BACKUP_DIR, Config.STATIC_IMAGE_DIR]:
     os.makedirs(directory, exist_ok=True)
 
+# ==================== AUTHENTICATION ====================
+
+def safe_prune_backups(keep=30):
+    """Delete old automatic backups, keeping the newest `keep` files."""
+    try:
+        backups = sorted(
+            globmod.glob(os.path.join(Config.BACKUP_DIR, '*.db')),
+            key=lambda p: (os.path.getmtime(p), os.path.basename(p)),
+            reverse=True
+        )
+        for old in backups[keep:]:
+            try:
+                os.remove(old)
+            except OSError:
+                pass
+    except OSError:
+        pass
+
+def auto_backup():
+    """Back up the database once per day and prune old backups."""
+    try:
+        stamp = datetime.now().strftime('%Y%m%d')
+        marker = os.path.join(Config.BACKUP_DIR, f'.autobackup_{stamp}')
+        if os.path.exists(marker):
+            return
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_path = os.path.join(Config.BACKUP_DIR, f'waraq_auto_{timestamp}.db')
+        shutil.copy2(Config.DATABASE, backup_path)
+        with open(marker, 'w') as f:
+            f.write(timestamp)
+        safe_prune_backups(keep=30)
+    except Exception:
+        # Backup problems must never stop the office from working.
+        pass
+
 # Initialize database on startup
 init_db()
+auto_backup()
+
+# ==================== LOGIN GATE ====================
+
+@app.before_request
+def require_login():
+    allowed = ('login', 'setup', 'static')
+    if request.endpoint in allowed:
+        return None
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    return None
+
+# ==================== USER ACCOUNTS / AUTH ====================
+
+def _users_count():
+    conn = get_db_connection()
+    n = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    conn.close()
+    return n
+
+def _current_user():
+    uid = session.get('user_id')
+    if not uid:
+        return None
+    conn = get_db_connection()
+    row = conn.execute(
+        """SELECT u.*, p.photo FROM users u
+           LEFT JOIN user_profile p ON p.user_id = u.id
+           WHERE u.id = ? AND u.is_active = 1""", (uid,)
+    ).fetchone()
+    conn.close()
+    return row
+
+def _require_admin():
+    user = _current_user()
+    if not user or user['role'] != 'admin':
+        return None
+    return user
+
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    """First-run registration: creates the first admin account.
+    Blocked once any user exists."""
+    if _users_count() > 0:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip().lower()
+        full_name = request.form.get('full_name', '').strip()
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm', '')
+        if not username or not full_name:
+            flash('Client name is required.', 'error')
+            return redirect(url_for('setup'))
+        if len(password) < 6:
+            flash('پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔ Password must be at least 6 characters.', 'error')
+            return redirect(url_for('setup'))
+        if password != confirm:
+            flash('پاس ورڈز مشابہ نہیں ہیں۔ Passwords do not match.', 'error')
+            return redirect(url_for('setup'))
+        conn = get_db_connection()
+        try:
+            conn.execute(
+                "INSERT INTO users (username, password_hash, full_name, role) VALUES (?, ?, ?, 'admin')",
+                (username, generate_password_hash(password), full_name),
+            )
+            conn.commit()
+        except sqlite3.IntegrityError:
+            conn.close()
+            flash('یہ صارف نام پہلے سے موجود ہے۔ Username already exists.', 'error')
+            return redirect(url_for('setup'))
+        conn.close()
+        flash('ایڈمین اکاؤنٹ بنا دیا گیا۔ اب داخل ہوں۔ Admin account created. Please sign in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('setup.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if _users_count() == 0:
+        return redirect(url_for('setup'))
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip().lower()
+        password = request.form.get('password', '')
+        conn = get_db_connection()
+        user = conn.execute(
+            "SELECT * FROM users WHERE username = ? AND is_active = 1", (username,)
+        ).fetchone()
+        conn.close()
+        if user and check_password_hash(user['password_hash'], password):
+            session.permanent = True
+            session['user_id'] = user['id']
+            return redirect(url_for('dashboard'))
+        flash('غلط صارف نام یا پاس ورڈ۔ Invalid username or password.', 'error')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 # ==================== CONTEXT PROCESSORS ====================
 
@@ -38,8 +217,22 @@ def inject_globals():
         'company_phone': Config.COMPANY_PHONE,
         'company_email': Config.COMPANY_EMAIL,
         'currency': Config.CURRENCY,
-        'current_year': datetime.now().year
+        'current_year': datetime.now().year,
+        'current_user': _current_user(),
     }
+
+# ==================== VALIDATION HELPERS ====================
+
+def parse_float(value, field_label, default=None):
+    """Parse a money/quantity field. On bad input, flash a friendly message
+    and return `default` so the caller can re-render the form."""
+    if value is None or str(value).strip() == '':
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        flash(f'Invalid number entered in "{field_label}". Please enter digits only.', 'error')
+        return None
 
 # ==================== DASHBOARD ====================
 
@@ -90,12 +283,16 @@ def clients_list():
 @app.route('/clients/add', methods=['GET', 'POST'])
 def client_add():
     if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        if not name:
+            flash('Client name is required.', 'error')
+            return render_template('clients/form.html', client=None)
         conn = get_db_connection()
         conn.execute("""
             INSERT INTO clients (name, contact_person, phone, email, address, cnic, client_type)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
-            request.form['name'],
+            name,
             request.form.get('contact_person', ''),
             request.form.get('phone', ''),
             request.form.get('email', ''),
@@ -131,11 +328,16 @@ def client_edit(id):
     client = conn.execute("SELECT * FROM clients WHERE id = ?", (id,)).fetchone()
 
     if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        if not name:
+            conn.close()
+            flash('Client name is required.', 'error')
+            return render_template('clients/form.html', client=client)
         conn.execute("""
             UPDATE clients SET name=?, contact_person=?, phone=?, email=?, address=?, cnic=?, client_type=?
             WHERE id=?
         """, (
-            request.form['name'], request.form.get('contact_person', ''),
+            name, request.form.get('contact_person', ''),
             request.form.get('phone', ''), request.form.get('email', ''),
             request.form.get('address', ''), request.form.get('cnic', ''),
             request.form.get('client_type', 'Individual'), id
@@ -151,6 +353,16 @@ def client_edit(id):
 @app.route('/clients/<int:id>/delete', methods=['POST'])
 def client_delete(id):
     conn = get_db_connection()
+    invoice_count = conn.execute("SELECT COUNT(*) FROM invoices WHERE client_id = ?", (id,)).fetchone()[0]
+    if invoice_count > 0:
+        conn.close()
+        flash('This client has invoices on record and cannot be deleted. Delete or reassign their invoices first.', 'error')
+        return redirect(url_for('clients_list'))
+    job_count = conn.execute("SELECT COUNT(*) FROM jobs WHERE client_id = ?", (id,)).fetchone()[0]
+    if job_count > 0:
+        conn.close()
+        flash('This client has jobs on record and cannot be deleted. Delete their jobs first.', 'error')
+        return redirect(url_for('clients_list'))
     conn.execute("DELETE FROM clients WHERE id = ?", (id,))
     conn.commit()
     conn.close()
@@ -162,19 +374,27 @@ def client_delete(id):
 @app.route('/services')
 def services_list():
     conn = get_db_connection()
-    services = conn.execute("SELECT * FROM services ORDER BY category, service_name").fetchall()
+    services = conn.execute("SELECT * FROM services WHERE is_active = 1 ORDER BY category, service_name").fetchall()
     conn.close()
     return render_template('services/list.html', services=services)
 
 @app.route('/services/add', methods=['POST'])
 def service_add():
+    service_name = request.form.get('service_name', '').strip()
+    category = request.form.get('category', '').strip()
+    if not service_name or not category:
+        flash('Service name and category are required.', 'error')
+        return redirect(url_for('services_list'))
+    base_price = parse_float(request.form.get('base_price'), 'Base Price', 0)
+    if base_price is None:
+        return redirect(url_for('services_list'))
     conn = get_db_connection()
     conn.execute("""
         INSERT INTO services (service_name, category, description, base_price)
         VALUES (?, ?, ?, ?)
     """, (
-        request.form['service_name'], request.form['category'],
-        request.form.get('description', ''), request.form.get('base_price', 0)
+        service_name, category,
+        request.form.get('description', ''), base_price
     ))
     conn.commit()
     conn.close()
@@ -183,13 +403,21 @@ def service_add():
 
 @app.route('/services/<int:id>/edit', methods=['POST'])
 def service_edit(id):
+    service_name = request.form.get('service_name', '').strip()
+    category = request.form.get('category', '').strip()
+    if not service_name or not category:
+        flash('Service name and category are required.', 'error')
+        return redirect(url_for('services_list'))
+    base_price = parse_float(request.form.get('base_price'), 'Base Price', 0)
+    if base_price is None:
+        return redirect(url_for('services_list'))
     conn = get_db_connection()
     conn.execute("""
         UPDATE services SET service_name=?, category=?, description=?, base_price=?
         WHERE id=?
     """, (
-        request.form['service_name'], request.form['category'],
-        request.form.get('description', ''), request.form.get('base_price', 0), id
+        service_name, category,
+        request.form.get('description', ''), base_price, id
     ))
     conn.commit()
     conn.close()
@@ -199,7 +427,7 @@ def service_edit(id):
 @app.route('/services/<int:id>/delete', methods=['POST'])
 def service_delete(id):
     conn = get_db_connection()
-    conn.execute("DELETE FROM services WHERE id = ?", (id,))
+    conn.execute("UPDATE services SET is_active = 0 WHERE id = ?", (id,))
     conn.commit()
     conn.close()
     flash('Service deleted!', 'success')
@@ -248,16 +476,24 @@ def job_add():
     services = conn.execute("SELECT * FROM services WHERE is_active=1 ORDER BY service_name").fetchall()
 
     if request.method == 'POST':
+        if not request.form.get('client_id') or not request.form.get('job_title', '').strip():
+            conn.close()
+            flash('Client and job title are required.', 'error')
+            return render_template('jobs/form.html', job=None, clients=clients, services=services)
+        cost = parse_float(request.form.get('cost'), 'Cost', 0)
+        if cost is None:
+            conn.close()
+            return render_template('jobs/form.html', job=None, clients=clients, services=services)
         conn.execute("""
             INSERT INTO jobs (client_id, service_id, job_title, category, description, 
                             priority, assigned_to, start_date, due_date, cost, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             request.form['client_id'], request.form.get('service_id') or None,
-            request.form['job_title'], request.form['category'],
+            request.form['job_title'].strip(), request.form['category'],
             request.form.get('description', ''), request.form.get('priority', 'Normal'),
             request.form.get('assigned_to', ''), request.form.get('start_date'),
-            request.form.get('due_date'), request.form.get('cost', 0),
+            request.form.get('due_date'), cost,
             request.form.get('notes', '')
         ))
         conn.commit()
@@ -290,6 +526,15 @@ def job_edit(id):
     services = conn.execute("SELECT * FROM services WHERE is_active=1 ORDER BY service_name").fetchall()
 
     if request.method == 'POST':
+        if not request.form.get('client_id') or not request.form.get('job_title', '').strip():
+            conn.close()
+            flash('Client and job title are required.', 'error')
+            return render_template('jobs/form.html', job=job, clients=clients, services=services)
+        cost = parse_float(request.form.get('cost'), 'Cost', 0)
+        if cost is None:
+            conn.close()
+            return render_template('jobs/form.html', job=job, clients=clients, services=services)
+
         status = request.form.get('status', job['status'])
         completed_date = None
         if status == 'Completed' and job['status'] != 'Completed':
@@ -306,11 +551,11 @@ def job_edit(id):
             WHERE id=?
         """, (
             request.form['client_id'], request.form.get('service_id') or None,
-            request.form['job_title'], request.form['category'],
+            request.form['job_title'].strip(), request.form['category'],
             request.form.get('description', ''), status,
             request.form.get('priority', 'Normal'), request.form.get('assigned_to', ''),
             request.form.get('start_date'), request.form.get('due_date'),
-            completed_date, request.form.get('cost', 0), request.form.get('notes', ''), id
+            completed_date, cost, request.form.get('notes', ''), id
         ))
         conn.commit()
         conn.close()
@@ -323,6 +568,11 @@ def job_edit(id):
 @app.route('/jobs/<int:id>/delete', methods=['POST'])
 def job_delete(id):
     conn = get_db_connection()
+    invoice_count = conn.execute("SELECT COUNT(*) FROM invoices WHERE job_id = ?", (id,)).fetchone()[0]
+    if invoice_count > 0:
+        conn.close()
+        flash('This job has invoices linked to it and cannot be deleted.', 'error')
+        return redirect(url_for('jobs_list'))
     conn.execute("DELETE FROM jobs WHERE id = ?", (id,))
     conn.commit()
     conn.close()
@@ -363,16 +613,30 @@ def invoice_create():
     services = conn.execute("SELECT * FROM services WHERE is_active=1 ORDER BY service_name").fetchall()
 
     if request.method == 'POST':
-        client_id = request.form['client_id']
+        client_id = request.form.get('client_id')
+        if not client_id:
+            conn.close()
+            flash('Please select a client.', 'error')
+            return render_template('invoices/create.html', clients=clients, services=services)
+        client_id = int(client_id)
         job_id = request.form.get('job_id') or None
         issue_date = request.form.get('issue_date', datetime.now().strftime('%Y-%m-%d'))
         due_date = request.form.get('due_date', (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'))
 
-        # Generate invoice number
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM invoices")
-        count = cursor.fetchone()[0] + 1
-        invoice_number = f"WARQ-{datetime.now().strftime('%Y%m')}-{count:04d}"
+        # Generate invoice number: continue from the highest existing number
+        # for this month, so deleting an invoice never causes a collision.
+        prefix = f"WARQ-{datetime.now().strftime('%Y%m')}-"
+        row = conn.execute(
+            "SELECT MAX(invoice_number) FROM invoices WHERE invoice_number LIKE ? || '%'",
+            (prefix,)
+        ).fetchone()
+        last_seq = 0
+        if row and row[0]:
+            try:
+                last_seq = int(row[0].rsplit('-', 1)[1])
+            except (IndexError, ValueError):
+                last_seq = 0
+        invoice_number = f"{prefix}{last_seq + 1:04d}"
 
         # Calculate totals from items
         descriptions = request.form.getlist('item_description[]')
@@ -381,16 +645,24 @@ def invoice_create():
 
         subtotal = 0
         items = []
+        valid = True
         for desc, qty, price in zip(descriptions, quantities, unit_prices):
             if desc.strip():
-                qty = float(qty) if qty else 1
-                price = float(price) if price else 0
+                qty = parse_float(qty, 'Quantity', 1)
+                price = parse_float(price, 'Unit Price', 0)
+                if qty is None or price is None:
+                    valid = False
+                    break
                 total = qty * price
                 subtotal += total
                 items.append((desc, qty, price, total))
 
+        discount = parse_float(request.form.get('discount'), 'Discount', 0) if valid else None
+        if not valid or discount is None:
+            conn.close()
+            return render_template('invoices/create.html', clients=clients, services=services)
+
         tax_amount = subtotal * Config.TAX_RATE
-        discount = float(request.form.get('discount', 0))
         total_amount = subtotal + tax_amount - discount
 
         conn.execute("""
@@ -446,12 +718,18 @@ def invoice_pdf(id):
     items = conn.execute("SELECT * FROM invoice_items WHERE invoice_id = ?", (id,)).fetchall()
     conn.close()
 
-    # Render HTML template for PDF
-    html = render_template('invoices/invoice_pdf.html', invoice=invoice, items=items)
+    # Render HTML template for PDF (language follows the UI toggle via cookie)
+    _ensure_urdu_pdf_font()
+    html = render_template('invoices/invoice_pdf.html', invoice=invoice, items=items,
+                           lang=get_doc_lang(),
+                           signature_path=get_static_image_path('Waraq-Signature.jpg'),
+                           stamp_path=get_static_image_path('Waraq-Stamp.jpg'),
+                           waraq_logo_path=get_static_image_path('waraq-logo-transparent.png'),
+                           cloudtrans_logo_path=get_static_image_path('cloudtrans-logo-transparent.png'))
 
     # Generate PDF
     result = io.BytesIO()
-    pdf = pisa.CreatePDF(io.StringIO(html), result)
+    pdf = pisa.CreatePDF(io.StringIO(html), result, link_callback=_pdf_link_callback)
 
     if not pdf.err:
         response = make_response(result.getvalue())
@@ -475,11 +753,22 @@ def invoice_print(id):
 
     items = conn.execute("SELECT * FROM invoice_items WHERE invoice_id = ?", (id,)).fetchall()
     conn.close()
-    return render_template('invoices/print.html', invoice=invoice, items=items)
+    return render_template('invoices/print.html', invoice=invoice, items=items,
+                           lang=get_doc_lang(),
+                           signature_url=url_for('static', filename='images/Waraq-Signature.jpg'),
+                           stamp_url=url_for('static', filename='images/Waraq-Stamp.jpg'),
+                           waraq_logo_url=url_for('static', filename='images/waraq-logo-transparent.png'),
+                           cloudtrans_logo_url=url_for('static', filename='images/cloudtrans-logo-transparent.png'))
 
 @app.route('/invoices/<int:id>/delete', methods=['POST'])
 def invoice_delete(id):
     conn = get_db_connection()
+    payment_count = conn.execute("SELECT COUNT(*) FROM payments WHERE invoice_id = ?", (id,)).fetchone()[0]
+    if payment_count > 0:
+        conn.close()
+        flash('This invoice has payments recorded against it and cannot be deleted. Delete its payments first.', 'error')
+        return redirect(url_for('invoices_list'))
+    conn.execute("DELETE FROM invoice_items WHERE invoice_id = ?", (id,))
     conn.execute("DELETE FROM invoices WHERE id = ?", (id,))
     conn.commit()
     conn.close()
@@ -503,14 +792,28 @@ def payments_list():
 
 @app.route('/payments/add', methods=['POST'])
 def payment_add():
-    conn = get_db_connection()
-    invoice_id = request.form['invoice_id']
-    client_id = request.form['client_id']
-    amount = float(request.form['amount'])
-    payment_date = request.form['payment_date']
+    invoice_id = request.form.get('invoice_id')
+    client_id = request.form.get('client_id')
+    payment_date = request.form.get('payment_date') or datetime.now().strftime('%Y-%m-%d')
     payment_method = request.form.get('payment_method', 'Cash')
     reference_no = request.form.get('reference_no', '')
     notes = request.form.get('notes', '')
+
+    amount = parse_float(request.form.get('amount'), 'Amount')
+    if amount is None or amount <= 0:
+        flash('Payment amount must be a positive number.', 'error')
+        return redirect(url_for('invoice_detail', id=invoice_id) if invoice_id else url_for('payments_list'))
+
+    conn = get_db_connection()
+    invoice = conn.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,)).fetchone()
+    if not invoice:
+        conn.close()
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('payments_list'))
+    if amount > invoice['balance_due']:
+        conn.close()
+        flash(f'Amount exceeds the remaining balance ({invoice["balance_due"]:,.2f}). Please record a smaller payment.', 'error')
+        return redirect(url_for('invoice_detail', id=invoice_id))
 
     conn.execute("""
         INSERT INTO payments (invoice_id, client_id, amount, payment_date, payment_method, reference_no, notes)
@@ -534,6 +837,77 @@ def payment_add():
     conn.close()
     flash('Payment recorded successfully!', 'success')
     return redirect(url_for('invoice_detail', id=invoice_id))
+
+# ==================== EXPENSES ====================
+
+@app.route('/expenses')
+def expenses_list():
+    conn = get_db_connection()
+
+    month = request.args.get('month', '')
+    category = request.args.get('category', '')
+
+    query = "SELECT * FROM expenses WHERE 1=1"
+    params = []
+    if month:
+        query += " AND strftime('%Y-%m', expense_date) = ?"
+        params.append(month)
+    if category:
+        query += " AND category = ?"
+        params.append(category)
+    query += " ORDER BY expense_date DESC, id DESC"
+    expenses = conn.execute(query, params).fetchall()
+
+    total = conn.execute("SELECT COALESCE(SUM(amount), 0) FROM expenses").fetchone()[0]
+    month_total = conn.execute(
+        "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE strftime('%Y-%m', expense_date) = ?",
+        (datetime.now().strftime('%Y-%m'),)
+    ).fetchone()[0]
+    categories = conn.execute("SELECT DISTINCT category FROM expenses ORDER BY category").fetchall()
+
+    conn.close()
+    today = datetime.now().strftime('%Y-%m-%d')
+    return render_template('expenses/list.html', expenses=expenses, total=total,
+                         month_total=month_total, categories=categories,
+                         month=month, category=category, today=today)
+
+@app.route('/expenses/add', methods=['POST'])
+def expense_add():
+    category = request.form.get('category', '').strip()
+    expense_date = request.form.get('expense_date') or datetime.now().strftime('%Y-%m-%d')
+    if not category:
+        flash('Expense category is required.', 'error')
+        return redirect(url_for('expenses_list'))
+    amount = parse_float(request.form.get('amount'), 'Amount')
+    if amount is None or amount <= 0:
+        flash('Expense amount must be a positive number.', 'error')
+        return redirect(url_for('expenses_list'))
+
+    conn = get_db_connection()
+    conn.execute("""
+        INSERT INTO expenses (category, description, amount, expense_date, paid_by, notes)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        category,
+        request.form.get('description', ''),
+        amount,
+        expense_date,
+        request.form.get('paid_by', ''),
+        request.form.get('notes', '')
+    ))
+    conn.commit()
+    conn.close()
+    flash('Expense added successfully!', 'success')
+    return redirect(url_for('expenses_list'))
+
+@app.route('/expenses/<int:id>/delete', methods=['POST'])
+def expense_delete(id):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM expenses WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    flash('Expense deleted!', 'success')
+    return redirect(url_for('expenses_list'))
 
 # ==================== REPORTS ====================
 
@@ -692,12 +1066,282 @@ def export_jobs():
 
 # ==================== BACKUP ====================
 
+# ==================== USERS ADMIN (admin only) ====================
+
+@app.route('/users')
+def users_list():
+    if not _require_admin():
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('dashboard'))
+    conn = get_db_connection()
+    users = conn.execute(
+        """SELECT u.*, (SELECT COUNT(*) FROM user_profile p WHERE p.user_id = u.id AND p.full_name != '') AS has_profile
+           FROM users u ORDER BY u.id"""
+    ).fetchall()
+    conn.close()
+    return render_template('users.html', users=users)
+
+@app.route('/users/add', methods=['POST'])
+def users_add():
+    if not _require_admin():
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('dashboard'))
+    username = request.form.get('username', '').strip().lower()
+    full_name = request.form.get('full_name', '').strip()
+    role = request.form.get('role', 'staff').strip()
+    password = request.form.get('password', '')
+    if not username or not full_name or len(password) < 6:
+        flash('پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔ Password must be at least 6 characters.', 'error')
+        return redirect(url_for('users_list'))
+    if role not in ('admin', 'staff'):
+        role = 'staff'
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO users (username, password_hash, full_name, role) VALUES (?, ?, ?, ?)",
+            (username, generate_password_hash(password), full_name, role),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        flash('یہ صارف نام پہلے سے موجود ہے۔ Username already exists.', 'error')
+        return redirect(url_for('users_list'))
+    conn.close()
+    flash('Service added successfully!', 'success')
+    return redirect(url_for('users_list'))
+
+@app.route('/users/<int:uid>/toggle', methods=['POST'])
+def users_toggle(uid):
+    admin = _require_admin()
+    if not admin or admin['id'] == uid:
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('users_list'))
+    conn = get_db_connection()
+    conn.execute("UPDATE users SET is_active = 1 - is_active WHERE id = ?", (uid,))
+    conn.commit()
+    conn.close()
+    flash('Service updated!', 'success')
+    return redirect(url_for('users_list'))
+
+@app.route('/users/<int:uid>/reset-password', methods=['POST'])
+def users_reset_password(uid):
+    admin = _require_admin()
+    if not admin:
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('dashboard'))
+    password = request.form.get('password', '')
+    if len(password) < 6:
+        flash('پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔ Password must be at least 6 characters.', 'error')
+        return redirect(url_for('users_list'))
+    conn = get_db_connection()
+    conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (generate_password_hash(password), uid))
+    conn.commit()
+    conn.close()
+    flash('Service updated!', 'success')
+    return redirect(url_for('users_list'))
+
+@app.route('/users/<int:uid>/delete', methods=['POST'])
+def users_delete(uid):
+    admin = _require_admin()
+    if not admin or admin['id'] == uid:
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('users_list'))
+    conn = get_db_connection()
+    admins_left = conn.execute("SELECT COUNT(*) FROM users WHERE role='admin' AND is_active=1 AND id != ?", (uid,)).fetchone()[0]
+    if admins_left == 0:
+        conn.close()
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('users_list'))
+    conn.execute("DELETE FROM user_profile WHERE user_id = ?", (uid,))
+    conn.execute("DELETE FROM users WHERE id = ?", (uid,))
+    conn.commit()
+    conn.close()
+    flash('Service deleted!', 'success')
+    return redirect(url_for('users_list'))
+
+# ==================== CHANGE OWN PASSWORD ====================
+
+@app.route('/account/password', methods=['GET', 'POST'])
+def change_password():
+    user = _current_user()
+    if not user:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        old = request.form.get('old', '')
+        new = request.form.get('new', '')
+        confirm = request.form.get('confirm', '')
+        if not check_password_hash(user['password_hash'], old):
+            flash('غلط صارف نام یا پاس ورڈ۔ Invalid username or password.', 'error')
+            return redirect(url_for('change_password'))
+        if len(new) < 6:
+            flash('پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔ Password must be at least 6 characters.', 'error')
+            return redirect(url_for('change_password'))
+        if new != confirm:
+            flash('پاس ورڈز مشابہ نہیں ہیں۔ Passwords do not match.', 'error')
+            return redirect(url_for('change_password'))
+        conn = get_db_connection()
+        conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (generate_password_hash(new), user['id']))
+        conn.commit()
+        conn.close()
+        flash('Service updated!', 'success')
+        return redirect(url_for('profile_view'))
+    return render_template('change_password.html')
+
+# ==================== USER PROFILE (per user) ====================
+
+PROFILE_UPLOAD_DIR = Config.STATIC_IMAGE_DIR  # profile photos live with brand images
+PROFILE_CV_DIR = os.path.join(os.path.dirname(Config.STATIC_IMAGE_DIR), os.pardir, 'uploads')  # <app>/uploads
+
+SKILL_OPTIONS = {
+    'Languages': [
+        'Urdu (Native)', 'English', 'Arabic', 'Persian', 'Pashto', 'Shina',
+        'Balti', 'Indus Kohistani', 'Burushaski', 'Turkish', 'Chinese',
+    ],
+    'Language Services': [
+        'Translation', 'MTPE (Machine Translation Post-Editing)', 'Localization',
+        'LQA (Language Quality Assurance)', 'Linguistic Testing', 'Interpreting',
+        'Subtitling', 'Transcription', 'Proofreading', 'Copywriting', 'Terminology Management',
+    ],
+    'Domains': [
+        'Legal', 'Religious Texts', 'Corporate', 'Technical', 'Educational',
+        'Medical', 'Government', 'Game Localization', 'Marketing', 'Literary',
+    ],
+    'Digital & Office': [
+        'MS Office', 'Google Workspace', 'CAT Tools (Trados/memoQ)', 'Data Entry',
+        'Web Research', 'Email Handling', 'Customer Support', 'Bookkeeping',
+    ],
+    'Design & Media': [
+        'Graphic Design', 'Photoshop', 'Illustrator', 'Video Editing', 'Typing',
+    ],
+    'Web & Tech': [
+        'HTML/CSS', 'Python', 'WordPress', 'SEO', 'Social Media Management',
+    ],
+}
+
+
+def _get_or_create_profile(user_id):
+    conn = get_db_connection()
+    row = conn.execute("SELECT * FROM user_profile WHERE user_id = ?", (user_id,)).fetchone()
+    if not row:
+        conn.execute("INSERT INTO user_profile (user_id) VALUES (?)", (user_id,))
+        conn.commit()
+        row = conn.execute("SELECT * FROM user_profile WHERE user_id = ?", (user_id,)).fetchone()
+    conn.close()
+    return row
+
+
+@app.route('/profile')
+def profile_view():
+    user = _current_user()
+    if not user:
+        return redirect(url_for('login'))
+    profile = _get_or_create_profile(user['id'])
+    skills = [s for s in (profile['skills'] or '').split('|') if s]
+    socials = [s for s in (profile['socials'] or '').split('|') if s]
+    return render_template('profile.html', profile=profile, user=user, skills=skills, socials=socials, skill_options=SKILL_OPTIONS)
+
+
+@app.route('/users/<int:uid>/profile')
+def user_profile_by_id(uid):
+    """Admin shortcut: view any user's profile showcase."""
+    admin = _require_admin()
+    if not admin:
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('dashboard'))
+    conn = get_db_connection()
+    target = conn.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
+    conn.close()
+    if not target:
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('users_list'))
+    profile = _get_or_create_profile(uid)
+    skills = [s for s in (profile['skills'] or '').split('|') if s]
+    socials = [s for s in (profile['socials'] or '').split('|') if s]
+    return render_template('profile.html', profile=profile, user=target, skills=skills, socials=socials, skill_options=SKILL_OPTIONS)
+
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+def profile_edit():
+    user = _current_user()
+    if not user:
+        return redirect(url_for('login'))
+    profile = _get_or_create_profile(user['id'])
+    if request.method == 'POST':
+        full_name = request.form.get('full_name', '').strip()
+        if not full_name:
+            flash('Client name is required.', 'error')
+            return redirect(url_for('profile_edit'))
+
+        email = request.form.get('email', '').strip()
+        date_of_birth = request.form.get('date_of_birth', '').strip()
+        mobile = request.form.get('mobile', '').strip()
+        summary = request.form.get('summary', '').strip()
+        socials = '|'.join(s.strip() for s in request.form.getlist('socials') if s.strip())
+        skills = '|'.join(request.form.getlist('skills'))
+
+        photo = request.files.get('photo')
+        cv = request.files.get('cv')
+
+        photo_name = None
+        if photo and photo.filename:
+            ext = os.path.splitext(photo.filename)[1].lower()
+            if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
+                flash('Only image files (PNG, JPG, WEBP) are allowed for the photo.', 'error')
+                return redirect(url_for('profile_edit'))
+            photo_name = f'profile-photo{ext}'
+            photo.save(os.path.join(PROFILE_UPLOAD_DIR, photo_name))
+
+        cv_name = None
+        if cv and cv.filename:
+            ext = os.path.splitext(cv.filename)[1].lower()
+            if ext not in ('.pdf', '.doc', '.docx'):
+                flash('Only PDF or Word documents are allowed for the CV.', 'error')
+                return redirect(url_for('profile_edit'))
+            os.makedirs(PROFILE_CV_DIR, exist_ok=True)
+            cv_name = secure_filename(cv.filename)
+            cv.save(os.path.join(PROFILE_CV_DIR, cv_name))
+
+        conn = get_db_connection()
+        conn.execute(
+            """UPDATE user_profile SET full_name=?, email=?, date_of_birth=?, mobile=?,
+               socials=?, skills=?, summary=?, updated_at=CURRENT_TIMESTAMP,
+               photo=COALESCE(?, photo), cv_file=COALESCE(?, cv_file),
+               cv_name=COALESCE(?, cv_name) WHERE user_id=?""",
+            (full_name, email, date_of_birth, mobile, socials, skills, summary,
+             photo_name, cv_name, cv_name, user['id']),
+        )
+        conn.execute("UPDATE users SET full_name = ? WHERE id = ?", (full_name, user['id']))
+        conn.commit()
+        conn.close()
+        flash('Client updated successfully!', 'success')
+        return redirect(url_for('profile_view'))
+
+    return render_template('profile_edit.html', profile=profile, skill_options=SKILL_OPTIONS,
+                           skills=[s for s in (profile['skills'] or '').split('|') if s],
+                           socials=[s for s in (profile['socials'] or '').split('|') if s])
+
+
+@app.route('/profile/cv')
+def profile_cv():
+    user = _current_user()
+    if not user:
+        return redirect(url_for('login'))
+    profile = _get_or_create_profile(user['id'])
+    if not profile or not profile['cv_file']:
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('profile_view'))
+    path = os.path.join(PROFILE_CV_DIR, profile['cv_file'])
+    if not os.path.exists(path):
+        flash('Invoice not found.', 'error')
+        return redirect(url_for('profile_view'))
+    return send_file(path, as_attachment=True, download_name=profile['cv_name'] or profile['cv_file'])
+
 @app.route('/backup')
 def backup():
-    import shutil
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     backup_path = os.path.join(Config.BACKUP_DIR, f'waraq_backup_{timestamp}.db')
     shutil.copy2(Config.DATABASE, backup_path)
+    safe_prune_backups(keep=30)
     flash(f'Database backed up to {backup_path}', 'success')
     return redirect(url_for('dashboard'))
 

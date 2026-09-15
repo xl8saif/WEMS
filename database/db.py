@@ -135,6 +135,43 @@ def init_db():
         )
     """)
 
+    # User accounts (username + hashed password login)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'staff',
+            is_active INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # User profile (one showcase row per user account)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_profile (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT DEFAULT '',
+            email TEXT,
+            date_of_birth TEXT,
+            mobile TEXT,
+            photo TEXT,
+            socials TEXT,
+            skills TEXT,
+            cv_file TEXT,
+            cv_name TEXT,
+            summary TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    # Migration for databases created before per-user profiles:
+    # add the user_id link column if it is missing.
+    cursor.execute("PRAGMA table_info(user_profile)")
+    if "user_id" not in [col[1] for col in cursor.fetchall()]:
+        cursor.execute("ALTER TABLE user_profile ADD COLUMN user_id INTEGER")
+        cursor.execute("DELETE FROM user_profile WHERE user_id IS NULL")
+
     # Insert default services if empty
     cursor.execute("SELECT COUNT(*) FROM services")
     if cursor.fetchone()[0] == 0:

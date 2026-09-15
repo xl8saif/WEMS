@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}پروفائل میں ترمیم — WEMS{% endblock %}
+{% block page_title %}پروفائل میں ترمیم{% endblock %}
+{% block content %}
+<div class="profile-page">
+    <form method="POST" action="{{ url_for('profile_edit') }}" enctype="multipart/form-data" class="card form-card profile-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="full_name">پورا نام *</label>
+                <input class="form-input" id="full_name" name="full_name" value="{{ profile['full_name'] or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">ای میل</label>
+                <input class="form-input" type="email" id="email" name="email" value="{{ profile['email'] or '' }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="date_of_birth">تاریخِ پیدائش</label>
+                <input class="form-input" type="date" id="date_of_birth" name="date_of_birth" value="{{ profile['date_of_birth'] or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="mobile">موبائل نمبر</label>
+                <input class="form-input" id="mobile" name="mobile" value="{{ profile['mobile'] or '' }}" placeholder="+92 3xx xxxxxxx">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="photo">تصویر اپ لوڈ کریں</label>
+                <input class="form-input" type="file" id="photo" name="photo" accept=".png,.jpg,.jpeg,.webp">
+                {% if profile['photo'] %}<small class="muted">موجودہ تصویر محفوظ ہے — نئی اپ لوڈ اسے بدل دے گی۔</small>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="cv">سی وی اپ لوڈ کریں (PDF / Word)</label>
+                <input class="form-input" type="file" id="cv" name="cv" accept=".pdf,.doc,.docx">
+                {% if profile['cv_name'] %}<small class="muted">موجودہ: {{ profile['cv_name'] }}</small>{% endif %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>سوشل میڈیا (لنک یا آئی ڈی — ہٹا نہیں سکتے، صرف شامل کریں)</label>
+            <div class="socials-editor">
+                <input class="form-input social-input" name="socials" value="{{ socials[0] if socials|length > 0 else '' }}" placeholder="linkedin.com/in/username">
+                <input class="form-input social-input" name="socials" value="{{ socials[1] if socials|length > 1 else '' }}" placeholder="github.com/username">
+                <input class="form-input social-input" name="socials" value="{{ socials[2] if socials|length > 2 else '' }}" placeholder="facebook.com/username">
+                <input class="form-input social-input" name="socials" value="{{ socials[3] if socials|length > 3 else '' }}" placeholder="x.com/username">
+                <input class="form-input social-input" name="socials" value="{{ socials[4] if socials|length > 4 else '' }}" placeholder="wa.me/923xxxxxxxxx">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>ہنر کا انتخاب کریں</label>
+            <div class="skills-picker">
+                {% for group, options in skill_options.items() %}
+                <fieldset class="skill-group">
+                    <legend>{{ group }}</legend>
+                    {% for s in options %}
+                    <label class="skill-option"><input type="checkbox" name="skills" value="{{ s }}" {% if s in skills %}checked{% endif %}> {{ s }}</label>
+                    {% endfor %}
+                </fieldset>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="summary">تعارف (مختصر)</label>
+            <textarea class="form-input" id="summary" name="summary" rows="4" placeholder="اپنے بارے میں دو چار جملے...">{{ profile['summary'] or '' }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> محفوظ پروفائل</button>
+            <a href="{{ url_for('profile_view') }}" class="btn btn-outline">منسوخ کریں</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

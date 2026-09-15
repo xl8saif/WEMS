@@ -1,3 +1,61 @@
-<!DOCTYPE html><html lang="ur" dir="rtl"><head><meta charset="UTF-8"><title>انوائس {{ invoice.invoice_number }}</title><style>
-@font-face{font-family:NotoNastaliqUrdu;src:url("../fonts/NotoNastaliqUrdu-Regular.ttf")}@page{size:A4;margin:7mm}body{font-family:NotoNastaliqUrdu,'Noto Naskh Arabic','Segoe UI',Arial,sans-serif;margin:0;padding:0;color:#333;direction:rtl;font-size:10px;line-height:1.35}.invoice-container{width:100%;margin:0 auto;border:1px solid #ddd;padding:7mm;box-sizing:border-box}.invoice-header{display:flex;justify-content:space-between;margin-bottom:10px}.company-info h2{margin:0;color:#2c3e50;font-family:'Segoe UI',Arial,sans-serif;font-size:15px}.company-info p{margin:1px 0;font-size:8.5px}.invoice-title{text-align:left}.invoice-title h1{margin:0;color:#e74c3c;font-size:22px}.invoice-title p{margin:1px 0;font-size:9px}.brand-line{font-size:8px;color:#667}.client-info{background:#f8f9fa;padding:7px;margin-bottom:8px;font-size:9px}.invoice-items{width:100%;border-collapse:collapse;margin:8px 0}.invoice-items th,.invoice-items td{padding:4px 5px;text-align:right;border-bottom:1px solid #ddd;font-size:8.5px}.invoice-items th{background:#2c3e50;color:white}.invoice-items tr{page-break-inside:avoid}.totals{width:240px;margin-right:auto;border-collapse:collapse;margin-top:5px}.totals td{padding:2px 4px;text-align:right;font-size:8.5px}.totals .grand{font-size:10px;font-weight:bold;color:#2c3e50;border-top:1.5px solid #2c3e50}.document-auth{margin-top:10px;display:flex;justify-content:flex-start;align-items:flex-end;gap:18px;direction:rtl;page-break-inside:avoid}.signature-box,.stamp-box{text-align:center;width:145px}.signature-image{display:block;width:145px;height:48px;object-fit:contain;margin:0 auto 2px}.stamp-image{display:block;width:75px;height:75px;object-fit:contain;margin:0 auto 2px}.auth-label{border-top:1px solid #333;padding-top:2px;font-size:8px}.no-print{text-align:center;margin-top:15px}.no-print button{padding:8px 16px;border:0;border-radius:5px;background:#3498db;color:white;cursor:pointer;font-family:inherit}.compact-invoice .invoice-container{padding:5mm}.compact-invoice .invoice-header{margin-bottom:6px}.compact-invoice .client-info{padding:5px;margin-bottom:5px}.compact-invoice .invoice-items{margin:5px 0}.compact-invoice .invoice-items th,.compact-invoice .invoice-items td{padding:3px 4px;font-size:8px}.compact-invoice .document-auth{margin-top:6px}@media print{.no-print{display:none}}
-</style></head><body class="{% if items|length <= 10 %}compact-invoice{% endif %}"><div class="invoice-container"><div class="invoice-header"><div class="company-info"><h2>WARAQ ENTERPRISES</h2><p>ورق انٹرپرائزز، گلگت</p><p>KIU روڈ، کونوداس، گلگت</p><p>ای میل: xl8.saif@gmail.com</p><p>WhatsApp: +92 310 0989830</p><p class="brand-line">CloudTrans کے تعاون سے</p></div><div class="invoice-title"><h1>انوائس</h1><p><strong># {{ invoice.invoice_number }}</strong></p><p>اجراء: {{ invoice.issue_date }}</p><p>آخری تاریخ: {{ invoice.due_date or 'مقرر نہیں' }}</p></div></div><div class="client-info"><strong>بل برائے:</strong><br>{{ invoice.client_name }}<br>{{ invoice.client_phone or '' }}<br>{{ invoice.client_address or '' }}</div><table class="invoice-items"><thead><tr><th>#</th><th>تفصیل</th><th>مقدار</th><th>فی یونٹ قیمت</th><th>رقم</th></tr></thead><tbody>{% for item in items %}<tr><td>{{ loop.index }}</td><td>{{ item.description }}</td><td>{{ item.quantity }}</td><td>{{ "{:,.2f}".format(item.unit_price) }}</td><td>{{ "{:,.2f}".format(item.total_price) }}</td></tr>{% endfor %}</tbody></table><table class="totals"><tr><td>ذیلی مجموعہ:</td><td>{{ "{:,.2f}".format(invoice.subtotal) }}</td></tr><tr><td>ٹیکس:</td><td>{{ "{:,.2f}".format(invoice.tax_amount) }}</td></tr><tr><td>رعایت:</td><td>{{ "{:,.2f}".format(invoice.discount) }}</td></tr><tr class="grand"><td>کل رقم:</td><td>{{ "{:,.2f}".format(invoice.total_amount) }} PKR</td></tr><tr><td>ادا شدہ:</td><td>{{ "{:,.2f}".format(invoice.paid_amount) }}</td></tr><tr class="grand"><td>قابلِ ادائیگی بقایا:</td><td>{{ "{:,.2f}".format(invoice.balance_due) }} PKR</td></tr></table><div class="document-auth"><div class="signature-box"><img class="signature-image" src="{{ signature_path or url_for('static', filename='images/Waraq-Signature.jpg') }}" alt="ورق انٹرپرائزز کے مجاز دستخط"><div class="auth-label">مجاز دستخط</div></div><div class="stamp-box"><img class="stamp-image" src="{{ stamp_path or url_for('static', filename='images/Waraq-Stamp.jpg') }}" alt="ورق انٹرپرائزز کی مہر"><div class="auth-label">ادارے کی مہر</div></div></div><div style="margin-top:8px;text-align:center;font-size:7.5px;color:#666"><p>آپ کے کاروبار کا شکریہ۔</p><p>ورق انٹرپرائزز، گلگت — WEMS</p><p>تیار کردہ: سید سیف اللہ جیلانی</p></div></div><div class="no-print"><button onclick="window.print()">انوائس پرنٹ کریں</button></div></body></html>
+<!DOCTYPE html><html lang="{{ 'en' if lang == 'en' else 'ur' }}" dir="{{ 'ltr' if lang == 'en' else 'rtl' }}"><head><meta charset="UTF-8"><title>{% if lang == 'en' %}Invoice {% else %}انوائس {% endif %}{{ invoice.invoice_number }}</title><style>
+@font-face{font-family:NotoNastaliqUrdu;src:url("../fonts/NotoNastaliqUrdu-Regular.ttf")}
+@page{size:A4;margin:7mm}
+body{font-family:NotoNastaliqUrdu,'Noto Naskh Arabic','Segoe UI',Arial,sans-serif;margin:0;padding:0;color:#333;direction:rtl;font-size:10px;line-height:1.35}
+body.doc-en{font-family:'Segoe UI',Arial,'DejaVu Sans',sans-serif;direction:ltr}
+.invoice-container{width:100%;margin:0 auto;border:1px solid #ddd;padding:7mm;box-sizing:border-box}
+/* Letterhead: Waraq seal | company identity | CloudTrans */
+.letterhead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.lh-logo{flex:none;display:flex;align-items:center;justify-content:center}
+.lh-waraq{height:54px;width:auto;object-fit:contain}
+.lh-ct{height:46px;width:auto;object-fit:contain}
+.lh-center{flex:1;text-align:center}
+.lh-center h2{margin:0;color:#2c3e50;font-family:'Segoe UI',Arial,sans-serif;font-size:16px;letter-spacing:.5px}
+.lh-center p{margin:1px 0;font-size:8.5px}
+.invoice-header{display:flex;justify-content:space-between;margin-bottom:10px}
+.company-info h2{margin:0;color:#2c3e50;font-family:'Segoe UI',Arial,sans-serif;font-size:15px}
+.company-info p{margin:1px 0;font-size:8.5px}
+.invoice-title{text-align:left}
+.invoice-title h1{margin:0;color:#e74c3c;font-size:22px}
+.invoice-title p{margin:1px 0;font-size:9px}
+.brand-line{font-size:8px;color:#667}
+.client-info{background:#f8f9fa;padding:7px;margin-bottom:8px;font-size:9px}
+.invoice-items{width:100%;border-collapse:collapse;margin:8px 0}
+.invoice-items th,.invoice-items td{padding:4px 5px;text-align:right;border-bottom:1px solid #ddd;font-size:8.5px}
+body.doc-en .invoice-items th,body.doc-en .invoice-items td{text-align:left}
+.invoice-items th{background:#2c3e50;color:white}
+.invoice-items tr{page-break-inside:avoid}
+.totals{width:240px;margin-right:auto;border-collapse:collapse;margin-top:5px}
+body.doc-en .totals{margin-left:auto;margin-right:0}
+.totals td{padding:2px 4px;text-align:right;font-size:8.5px}
+body.doc-en .totals td{text-align:left}
+.totals .grand{font-size:10px;font-weight:bold;color:#2c3e50;border-top:1.5px solid #2c3e50}
+.document-auth{margin-top:10px;display:flex;justify-content:flex-start;align-items:flex-end;gap:18px;direction:rtl;page-break-inside:avoid}
+body.doc-en .document-auth{direction:ltr}
+.signature-box,.stamp-box{text-align:center;width:145px}
+.signature-image{display:block;width:145px;height:48px;object-fit:contain;margin:0 auto 2px}
+.stamp-image{display:block;width:75px;height:75px;object-fit:contain;margin:0 auto 2px}
+.auth-label{border-top:1px solid #333;padding-top:2px;font-size:8px}
+.no-print{text-align:center;margin-top:15px}
+.no-print button{padding:8px 16px;border:0;border-radius:5px;background:#3498db;color:white;cursor:pointer;font-family:inherit}
+.compact-invoice .invoice-container{padding:5mm}
+.compact-invoice .letterhead{margin-bottom:7px}
+.compact-invoice .invoice-header{margin-bottom:6px}
+.compact-invoice .client-info{padding:5px;margin-bottom:5px}
+.compact-invoice .invoice-items{margin:5px 0}
+.compact-invoice .invoice-items th,.compact-invoice .invoice-items td{padding:3px 4px;font-size:8px}
+.compact-invoice .document-auth{margin-top:6px}
+@media print{.no-print{display:none}}
+</style></head><body class="doc-{{ lang }}{% if items|length <= 10 %} compact-invoice{% endif %}"><div class="invoice-container">
+{% macro t(ur, en) %}{{ en if lang == 'en' else ur }}{% endmacro %}
+<div class="letterhead">
+  <div class="lh-logo"><img class="lh-waraq" src="{{ waraq_logo_url }}" alt="Waraq"></div>
+  <div class="lh-center">
+    <h2>WARAQ ENTERPRISES</h2>
+    <p>{{ t('ورق انٹرپرائزز، گلگت', 'Waraq Enterprises, Gilgit') }}</p>
+    <p>{{ t('کورٹ ایریا، یونیورسٹی روڈ، کونوداس، گلگت، پاکستان', 'Court Area, University Road, Konodas, Gilgit, Pakistan') }}</p>
+    <p>{{ t('ای میل', 'Email') }}: xl8.saif@gmail.com | WhatsApp: +92 310 0989830</p>
+  </div>
+  <div class="lh-logo"><img class="lh-ct" src="{{ cloudtrans_logo_url }}" alt="CloudTrans"></div>
+</div>
+<div class="invoice-header"><div class="company-info"><h2>WARAQ ENTERPRISES</h2><p>{{ t('ورق انٹرپرائزز، گلگت', 'Waraq Enterprises, Gilgit') }}</p><p>{{ t('ای میل', 'Email') }}: xl8.saif@gmail.com</p><p>WhatsApp: +92 310 0989830</p><p class="brand-line">{{ t('CloudTrans کے تعاون سے', 'Powered by CloudTrans') }}</p></div><div class="invoice-title"><h1>{{ t('انوائس', 'INVOICE') }}</h1><p><strong># {{ invoice.invoice_number }}</strong></p><p>{{ t('اجراء', 'Issue Date') }}: {{ invoice.issue_date }}</p><p>{{ t('آخری تاریخ', 'Due Date') }}: {{ invoice.due_date or t('مقرر نہیں', 'Not set') }}</p></div></div><div class="client-info"><strong>{{ t('بل برائے', 'Bill To') }}:</strong><br>{{ invoice.client_name }}<br>{{ invoice.client_phone or '' }}<br>{{ invoice.client_address or '' }}</div><table class="invoice-items"><thead><tr><th>#</th><th>{{ t('تفصیل', 'Description') }}</th><th>{{ t('مقدار', 'Qty') }}</th><th>{{ t('فی یونٹ قیمت', 'Unit Price') }}</th><th>{{ t('رقم', 'Amount') }}</th></tr></thead><tbody>{% for item in items %}<tr><td>{{ loop.index }}</td><td>{{ item.description }}</td><td>{{ item.quantity }}</td><td>{{ "{:,.2f}".format(item.unit_price) }}</td><td>{{ "{:,.2f}".format(item.total_price) }}</td></tr>{% endfor %}</tbody></table><table class="totals"><tr><td>{{ t('ذیلی مجموعہ:', 'Subtotal:') }}</td><td>{{ "{:,.2f}".format(invoice.subtotal) }}</td></tr><tr><td>{{ t('ٹیکس:', 'Tax:') }}</td><td>{{ "{:,.2f}".format(invoice.tax_amount) }}</td></tr><tr><td>{{ t('رعایت:', 'Discount:') }}</td><td>{{ "{:,.2f}".format(invoice.discount) }}</td></tr><tr class="grand"><td>{{ t('کل رقم:', 'Total Amount:') }}</td><td>{{ "{:,.2f}".format(invoice.total_amount) }} PKR</td></tr><tr><td>{{ t('ادا شدہ:', 'Paid:') }}</td><td>{{ "{:,.2f}".format(invoice.paid_amount) }}</td></tr><tr class="grand"><td>{{ t('قابلِ ادائیگی بقایا:', 'Balance Due:') }}</td><td>{{ "{:,.2f}".format(invoice.balance_due) }} PKR</td></tr></table><div class="document-auth"><div class="signature-box"><img class="signature-image" src="{{ signature_url }}" alt="{{ t('ورق انٹرپرائزز کے مجاز دستخط', 'Authorized signature of Waraq Enterprises') }}"><div class="auth-label">{{ t('مجاز دستخط', 'Authorized Signature') }}</div></div><div class="stamp-box"><img class="stamp-image" src="{{ stamp_url }}" alt="{{ t('ورق انٹرپرائزز کی مہر', 'Company stamp of Waraq Enterprises') }}"><div class="auth-label">{{ t('ادارے کی مہر', 'Company Stamp') }}</div></div></div><div style="margin-top:8px;text-align:center;font-size:7.5px;color:#666"><p>{{ t('آپ کے کاروبار کا شکریہ۔', 'Thank you for your business.') }}</p><p>{{ t('ورق انٹرپرائزز، گلگت', 'Waraq Enterprises, Gilgit') }} — WEMS</p><p>{{ t('تیار کردہ', 'Developed by') }}: {% if lang == 'en' %}Saif Ullah Jailani{% else %}سید سیف اللہ جیلانی{% endif %}</p></div></div><div class="no-print"><button onclick="window.print()">{{ t('انوائس پرنٹ کریں', 'Print Invoice') }}</button></div></body></html>

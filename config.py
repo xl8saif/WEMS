@@ -25,6 +25,9 @@ class Config:
     CURRENCY = "PKR"
     TAX_RATE = 0.0  # Update as needed
 
+    # Office login password (set the WEMS_PASSWORD environment variable to override)
+    OFFICE_PASSWORD = os.environ.get('WEMS_PASSWORD') or '025896'
+
     @staticmethod
     def init_app(app):
         pass

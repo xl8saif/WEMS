@@ -1,11 +1,34 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle'); // inside drawer: closes it
+    const sidebarOpenBtn = document.getElementById('sidebarOpenBtn'); // in top bar: opens it
+
+    function syncSidebar(open) {
+        if (!sidebar) return;
+        sidebar.classList.toggle('open', open);
+        if (sidebarToggle) sidebarToggle.setAttribute('aria-label', open ? 'مینو بند کریں' : 'مینو کھولیں');
+    }
+
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('open');
+            syncSidebar(!sidebar.classList.contains('open'));
         });
     }
+    if (sidebarOpenBtn) {
+        sidebarOpenBtn.addEventListener('click', function() {
+            syncSidebar(true);
+        });
+    }
+    // Tap outside the drawer (on the page content) closes it.
+    document.addEventListener('click', function(e) {
+        if (sidebar && sidebar.classList.contains('open') &&
+            !sidebar.contains(e.target) &&
+            !(sidebarOpenBtn && sidebarOpenBtn.contains(e.target)) &&
+            !(sidebarToggle && sidebarToggle.contains(e.target))) {
+            syncSidebar(false);
+        }
+    });
+
     document.querySelectorAll('.alert').forEach(alert => {
         setTimeout(() => {
             alert.style.opacity = '0';

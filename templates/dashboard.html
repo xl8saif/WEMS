@@ -5,23 +5,23 @@
 
 {% block content %}
 <div class="profile-hero">
-    <img class="profile-portrait" src="{{ url_for('static', filename='images/saif-ullah.jpg') }}" alt="سید سیف اللہ جیلانی">
+    <img class="profile-portrait" src="{{ url_for('static', filename='images/saif-portrait.jpg') }}" alt="سید سیف اللہ جیلانی">
     <div class="profile-main">
-        <div class="profile-kicker">ورق انٹرپرائزز، گلگت کا منصوبہ</div>
-        <h2>ورق انٹرپرائز مینجمنٹ سسٹم (WEMS)</h2>
+        <div class="profile-kicker">ڈویلپر کا تعارف</div>
+        <h2>ورق انٹرپرائزز مینجمنٹ سسٹم (WEMS)</h2>
         <p class="profile-developer">تیار کردہ: <strong>سید سیف اللہ جیلانی</strong></p>
         <p class="profile-role">سینئر مترجم، لوکلائزیشن اسپیشلسٹ اور لینگویج ٹیکنالوجی ماہر</p>
         <p class="profile-summary">12+ سالہ پیشہ ورانہ تجربہ، 3,500+ منصوبے؛ قانونی، مذہبی، کارپوریٹ، تکنیکی، تعلیمی، میڈیکل، حکومتی اور گیم لوکلائزیشن میں ترجمہ، MTPE، LQA، لسانی جانچ اور کثیر لسانی مواد کی تیاری۔ اردو مادری زبان؛ عربی، فارسی، انگریزی اور علاقائی زبانوں میں عملی مہارت، بشمول انڈس کوہستانی اور شینا۔</p>
         <div class="profile-links">
-            <a href="https://www.linkedin.com/in/xl8saif/" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i> LinkedIn</a>
-            <a href="https://www.upwork.com/freelancers/~011ed3711aa3cf98f4?viewMode=1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i> Upwork</a>
-            <a href="https://www.facebook.com/khalid.tasmim" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>
-            <a href="https://wa.me/923100989830" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-            <a href="mailto:xl8.saif@gmail.com"><i class="fas fa-envelope"></i> ای میل</a>
-            <a href="https://www.proz.com/profile/3150554" target="_blank" rel="noopener"><i class="fas fa-language"></i> ProZ</a>
-            <a href="https://xl8saif.github.io/" target="_blank" rel="noopener"><i class="fas fa-globe"></i> ویب سائٹ</a>
+            <a class="social-btn" style="--brand:#0a66c2" href="https://www.linkedin.com/in/xl8saif/" target="_blank" rel="noopener" aria-label="LinkedIn" title="LinkedIn"><span class="social-icon"><i class="fab fa-linkedin"></i></span><span class="social-label">LinkedIn</span></a>
+            <a class="social-btn" style="--brand:#14a800" href="https://www.upwork.com/freelancers/~011ed3711aa3cf98f4?viewMode=1" target="_blank" rel="noopener" aria-label="Upwork" title="Upwork"><span class="social-icon"><i class="fas fa-briefcase"></i></span><span class="social-label">Upwork</span></a>
+            <a class="social-btn" style="--brand:#1877f2" href="https://www.facebook.com/khalid.tasmim" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><span class="social-icon"><i class="fab fa-facebook"></i></span><span class="social-label">Facebook</span></a>
+            <a class="social-btn" style="--brand:#25d366" href="https://wa.me/923100989830" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp"><span class="social-icon"><i class="fab fa-whatsapp"></i></span><span class="social-label">WhatsApp</span></a>
+            <a class="social-btn" style="--brand:#e74c3c" href="mailto:xl8.saif@gmail.com" aria-label="Email" title="Email"><span class="social-icon"><i class="fas fa-envelope"></i></span><span class="social-label">ای میل</span></a>
+            <a class="social-btn" style="--brand:#16a085" href="https://www.proz.com/profile/3150554" target="_blank" rel="noopener" aria-label="ProZ" title="ProZ"><span class="social-icon"><i class="fas fa-language"></i></span><span class="social-label">ProZ</span></a>
+            <a class="social-btn" style="--brand:#2c3e50" href="https://xl8saif.github.io/" target="_blank" rel="noopener" aria-label="Website" title="Website"><span class="social-icon"><i class="fas fa-globe"></i></span><span class="social-label">ویب سائٹ</span></a>
         </div>
-        <p class="profile-location"><i class="fas fa-map-marker-alt"></i> Waraq KIU Road، Konodas، Gilgit</p>
+        <p class="profile-location"><i class="fas fa-map-marker-alt"></i> ورق انٹرپرائزز، کورٹ ایریا، یونیورسٹی روڈ، کونوداس، گلگت، پاکستان</p>
     </div>
 </div>
 
@@ -76,10 +76,10 @@
 
 {% block extra_js %}
 <script>
-const ctx = document.getElementById('revenueChart').getContext('2d');
-new Chart(ctx, { type: 'bar', data: { labels: {{ months|tojson }}, datasets: [
-    { label: 'آمدن', data: {{ revenues|tojson }}, backgroundColor: 'rgba(52, 152, 219, 0.7)', borderColor: 'rgba(52, 152, 219, 1)', borderWidth: 1 },
-    { label: 'وصول شدہ', data: {{ collected|tojson }}, backgroundColor: 'rgba(46, 204, 113, 0.7)', borderColor: 'rgba(46, 204, 113, 1)', borderWidth: 1 }
-] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+const chartCanvas = document.getElementById('revenueChart');
+new Chart(chartCanvas, { type: 'bar', data: { labels: {{ months|tojson }}, datasets: [
+    { label: 'آمدن', data: {{ revenues|tojson }}, backgroundColor: 'rgba(47, 107, 255, 0.80)', borderColor: 'rgba(143, 184, 255, 1)', borderWidth: 1 },
+    { label: 'وصول شدہ', data: {{ collected|tojson }}, backgroundColor: 'rgba(47, 174, 126, 0.85)', borderColor: 'rgba(94, 224, 172, 1)', borderWidth: 1 }
+] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#c9d8d2' }, grid: { color: 'rgba(255, 255, 255, 0.08)' } }, x: { ticks: { color: '#c9d8d2' }, grid: { display: false } } } } });
 </script>
 {% endblock %}

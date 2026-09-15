@@ -1,3 +1,9 @@
+/* WEMS offline font stack. All fonts are vendored in ../fonts — the app makes
+   no network font requests at runtime.
+
+   NOTE: the FIRST @font-face block below is managed by
+   .github/workflows/bundle-noto-nastaliq-urdu.yml, which replaces the first
+   block with Noto Nastaliq Urdu. Keep Noto first when editing this file. */
 @font-face {
   font-family: "Noto Nastaliq Urdu";
   src: url("../fonts/NotoNastaliqUrdu-Regular.ttf") format("truetype");
@@ -6,10 +12,71 @@
   font-display: swap;
 }
 
-/* Prefer the locally installed Noto Nastaliq Urdu font. The app remains
-   network-independent; no web-font request is made at runtime. */
+/* Urdu body text — Mehr Nastaliq Web (woff preferred, ttf fallback). */
+@font-face {
+  font-family: "Mehr Nastaliq Web";
+  src: url("../fonts/MehrNastaliqWeb.woff") format("woff"),
+       url("../fonts/MehrNastaliqWeb.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Display/headings — Alyamama (user-requested), all four weights, both
+   languages. Scheherazade New stays as the fallback. */
+@font-face {
+  font-family: "Alyamama";
+  src: url("../fonts/Alyamama-400.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Alyamama";
+  src: url("../fonts/Alyamama-500.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Alyamama";
+  src: url("../fonts/Alyamama-600.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Alyamama";
+  src: url("../fonts/Alyamama-700.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* Display/headings — Scheherazade New, both languages. */
+@font-face {
+  font-family: "Scheherazade New";
+  src: url("../fonts/ScheherazadeNew-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Scheherazade New";
+  src: url("../fonts/ScheherazadeNew-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* Font variables */
 :root {
-  --urdu-font: "Noto Nastaliq Urdu", "Noto Nastaliq", "Jameel Noori Nastaleeq", serif;
+  /* Urdu body: Mehr Nastaliq Web first (lighter, web-tuned), Noto as fallback */
+  --urdu-font: "Mehr Nastaliq Web", "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", serif;
+  /* Headings: Alyamama first (user-requested), Scheherazade New fallback */
+  --heading-font: "Alyamama", "Scheherazade New", "Mehr Nastaliq Web", "Noto Nastaliq Urdu", serif;
+  /* Latin body */
+  --body-font: "Segoe UI", Tahoma, Arial, sans-serif;
 }
 
 html[dir="rtl"] body,
@@ -26,7 +93,17 @@ html[dir="rtl"] .flash-message {
   font-family: var(--urdu-font);
 }
 
-/* Keep the lightweight offline icon glyphs out of the Nastaliq font. */
+/* Headings render in Scheherazade New in both languages. Generous
+   line-height leaves room for Nastaliq-style descenders. */
+h1, h2, h3, h4, h5,
+.page-title, .brand-title, .login-title, .section-title, .logo {
+  font-family: var(--heading-font);
+  font-optical-sizing: auto;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+/* Keep the lightweight offline icon glyphs out of the Nastaliq fonts. */
 .fas,
 .far,
 .fab,

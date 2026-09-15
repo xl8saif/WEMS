@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ابتدائی ترتیب — WEMS</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/waraq-logo-transparent.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/offline-icons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/branding.css') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alyamama:wght@300..900&family=Scheherazade+New:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; z-index: 1; }
+  .login-card { background: rgba(13, 27, 51, .80); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(148,180,255,.14); border-radius: 14px; box-shadow: 0 10px 34px rgba(2,6,16,.55); padding: 35px 30px; width: 100%; max-width: 420px; text-align: center; }
+  .login-logo { width: 84px; height: 84px; margin-bottom: 0; }
+  .logo-pair { display: flex; gap: 16px; justify-content: center; align-items: center; margin-bottom: 10px; }
+  .ct-badge { width: 84px; height: 84px; border-radius: 50%; background: #fff; padding: 13px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+  .ct-badge img { width: 100%; height: 100%; object-fit: contain; }
+  .login-title { font-size: 22px; margin: 8px 0 4px; color: var(--primary); }
+  .login-sub { color: #b9c2d4; font-size: 14px; margin-bottom: 22px; }
+  .login-card .form-group { text-align: right; margin-bottom: 15px; }
+  .login-card .form-group label { color: var(--secondary); }
+  .login-card .form-input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid rgba(148,180,255,.14); border-radius: 8px; font-size: 15px; background: rgba(8,16,34,.62); color: var(--primary); }
+  .login-card .form-input:focus { outline: none; border-color: var(--wared-red); background: rgba(8,16,34,.88); box-shadow: 0 0 0 3px rgba(47,107,255,.30); }
+  .login-card .btn { width: 100%; padding: 11px; font-size: 15px; }
+  .login-hint { margin-top: 16px; color: #b9c2d4; font-size: 12px; }
+  body { background: radial-gradient(1100px 520px at 50% -10%, #16345F 0%, #081020 52%, #050B18 100%); background-attachment: fixed; min-height: 100vh; }
+  body::after { content: ''; position: fixed; z-index: 0; border-radius: 50%; pointer-events: none; width: 560px; height: 560px; bottom: -200px; left: -160px; background: rgba(242,192,99,.10); filter: blur(110px); opacity: .8; }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="logo-pair">
+      <img src="{{ url_for('static', filename='images/waraq-logo-transparent.png') }}" alt="Waraq" class="login-logo">
+      <span class="ct-badge"><img src="{{ url_for('static', filename='images/cloudtrans-logo-transparent.png') }}" alt="CloudTrans"></span>
+    </div>
+    <div class="login-title">ورق انٹرپرائزز مینجمنٹ سسٹم <span style="direction:ltr; unicode-bidi:isolate;">(WEMS)</span></div>
+    <div class="login-sub">ابتدائی ترتیب — پہلا ایڈمین اکاؤنٹ بنائیں</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}"><i class="fas fa-exclamation-circle"></i> {{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <form method="post" class="form">
+      <div class="form-group">
+        <label for="full_name">پورا نام</label>
+        <input type="text" id="full_name" name="full_name" required class="form-input" placeholder="سید سیف اللہ جیلانی">
+      </div>
+      <div class="form-group">
+        <label for="username">صارف نام</label>
+        <input type="text" id="username" name="username" required autofocus autocomplete="username" class="form-input" placeholder="admin">
+      </div>
+      <div class="form-group">
+        <label for="password">پاس ورڈ (کم از کم 6 حروف)</label>
+        <input type="password" id="password" name="password" required autocomplete="new-password" class="form-input" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label for="confirm">پاس ورڈ دوبارہ</label>
+        <input type="password" id="confirm" name="confirm" required autocomplete="new-password" class="form-input" placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary">ایکاؤنٹ بنائیں</button>
+    </form>
+    <div class="login-hint">یہ صفحہ صرف پہلے اکاؤنٹ کے لیے ہے — بعد میں ایڈمین مزید صارفین بنائے گا</div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+</body>
+</html>

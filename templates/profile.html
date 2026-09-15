@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}پروفائل — WEMS{% endblock %}
+{% block page_title %}پروفائل{% endblock %}
+{% block content %}
+<div class="profile-page">
+    <div class="profile-actions-row">
+        <a href="{{ url_for('profile_edit') }}" class="btn btn-primary"><i class="fas fa-user-edit"></i> پروفائل میں ترمیم</a>
+        {% if profile['cv_file'] %}
+        <a href="{{ url_for('profile_cv') }}" class="btn btn-outline"><i class="fas fa-download"></i> سوانح حیات ڈاؤن لوڈ کریں</a>
+        {% endif %}
+    </div>
+
+    <div class="card profile-showcase">
+        <div class="showcase-top">
+            <div class="showcase-photo">
+                {% if profile['photo'] %}
+                <img src="{{ url_for('static', filename='images/' ~ profile['photo']) }}" alt="{{ profile['full_name'] }}">
+                {% else %}
+                <div class="photo-placeholder"><i class="fas fa-user"></i></div>
+                {% endif %}
+            </div>
+            <div class="showcase-id">
+                <h2 class="showcase-name">{{ profile['full_name'] or 'نام درج کریں' }}</h2>
+                {% if profile['summary'] %}<p class="showcase-summary">{{ profile['summary'] }}</p>{% endif %}
+                <div class="showcase-meta">
+                    {% if profile['email'] %}<span><i class="fas fa-envelope"></i> {{ profile['email'] }}</span>{% endif %}
+                    {% if profile['mobile'] %}<span><i class="fas fa-phone"></i> {{ profile['mobile'] }}</span>{% endif %}
+                    {% if profile['date_of_birth'] %}<span><i class="fas fa-birthday-cake"></i> {{ profile['date_of_birth'] }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if socials %}
+        <div class="showcase-section">
+            <h3 class="section-title"><i class="fas fa-share-alt"></i> سوشل میڈیا</h3>
+            <div class="socials-list">
+                {% for s in socials %}
+                <a class="social-chip" href="{{ s if s.startswith('http') else 'https://' ~ s }}" target="_blank" rel="noopener">{{ s }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="showcase-section">
+            <h3 class="section-title"><i class="fas fa-star"></i> ہنر</h3>
+            {% if skills %}
+            <div class="skills-cloud">
+                {% for s in skills %}<span class="skill-chip">{{ s }}</span>{% endfor %}
+            </div>
+            {% else %}
+            <p class="muted">ہنر منتخب نہیں کیا گیا۔</p>
+            {% endif %}
+        </div>
+
+        <div class="showcase-section">
+            <h3 class="section-title"><i class="fas fa-file-alt"></i> سوانح حیات</h3>
+            {% if profile['cv_name'] %}
+            <a class="cv-link" href="{{ url_for('profile_cv') }}"><i class="fas fa-file-pdf"></i> {{ profile['cv_name'] }}</a>
+            {% else %}
+            <p class="muted">سوانح حیات اپ لوڈ نہیں کی گئی۔</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
