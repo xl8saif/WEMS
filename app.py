@@ -187,6 +187,31 @@ def setup():
         return redirect(url_for('login'))
     return render_template('setup.html')
 
+# --- Login brute-force protection (per-username lockout) ---
+# Keyed by username rather than IP: hosts like PythonAnywhere sit behind a
+# shared proxy, so an IP-based ban would lock out every legitimate user.
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCK_SECONDS = 600  # 10 minutes
+_failed_logins = {}  # username -> {'count': int, 'locked_until': datetime|None}
+
+def _login_locked_until(username):
+    """Return the datetime until which `username` is locked out, or None."""
+    rec = _failed_logins.get(username)
+    if rec and rec.get('locked_until'):
+        if datetime.now() < rec['locked_until']:
+            return rec['locked_until']
+    return None
+
+def _record_failed_login(username):
+    rec = _failed_logins.setdefault(username, {'count': 0, 'locked_until': None})
+    rec['count'] += 1
+    if rec['count'] >= LOGIN_MAX_ATTEMPTS:
+        rec['locked_until'] = datetime.now() + timedelta(seconds=LOGIN_LOCK_SECONDS)
+        rec['count'] = 0
+
+def _clear_failed_logins(username):
+    _failed_logins.pop(username, None)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if _users_count() == 0:
@@ -194,16 +219,27 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip().lower()
         password = request.form.get('password', '')
-        conn = get_db_connection()
-        user = conn.execute(
-            "SELECT * FROM users WHERE username = ? AND is_active = 1", (username,)
-        ).fetchone()
-        conn.close()
-        if user and check_password_hash(user['password_hash'], password):
-            session.permanent = True
-            session['user_id'] = user['id']
-            return redirect(url_for('dashboard'))
-        flash('غلط صارف نام یا پاس ورڈ۔ Invalid username or password.', 'error')
+        locked_until = _login_locked_until(username)
+        if locked_until:
+            minutes = max(1, int((locked_until - datetime.now()).total_seconds() // 60) + 1)
+            flash(
+                f'بہت زیادہ غلط کوششیں۔ تقریباً {minutes} منٹ بعد دوبارہ کوشش کریں۔ '
+                f'Too many failed attempts. Please try again in about {minutes} minutes.',
+                'error',
+            )
+        else:
+            conn = get_db_connection()
+            user = conn.execute(
+                "SELECT * FROM users WHERE username = ? AND is_active = 1", (username,)
+            ).fetchone()
+            conn.close()
+            if user and check_password_hash(user['password_hash'], password):
+                _clear_failed_logins(username)
+                session.permanent = True
+                session['user_id'] = user['id']
+                return redirect(url_for('dashboard'))
+            _record_failed_login(username)
+            flash('غلط صارف نام یا پاس ورڈ۔ Invalid username or password.', 'error')
     return render_template('login.html')
 
 @app.route('/logout')
