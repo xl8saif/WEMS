@@ -1,0 +1,50 @@
+name: Build WEMS for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt pyinstaller
+
+      - name: Build WEMS
+        run: pyinstaller --clean --noconfirm WEMS.spec
+
+      - name: Smoke-test packaged launcher
+        shell: powershell
+        run: |
+          $p = Start-Process -FilePath "dist\WEMS\WEMS.exe" -PassThru
+          Start-Sleep -Seconds 4
+          try {
+            $r = Invoke-WebRequest -Uri "http://127.0.0.1:5000/" -UseBasicParsing -TimeoutSec 10
+            if ($r.StatusCode -ne 200) { throw "WEMS returned HTTP $($r.StatusCode)" }
+          }
+          finally {
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Package portable folder
+        shell: powershell
+        run: Compress-Archive -Path "dist\WEMS\*" -DestinationPath "WEMS-Windows-Portable.zip" -Force
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: WEMS-Windows-Portable
+          path: WEMS-Windows-Portable.zip
+          if-no-files-found: error

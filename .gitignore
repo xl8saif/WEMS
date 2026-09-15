@@ -4,9 +4,12 @@ database/waraq.db
 invoices/
 exports/
 backups/
+<<<<<<< HEAD
 # NOTE: static/images/ is NOT ignored — it holds brand assets (logos, portrait,
 # theme ornament) that ARE tracked and must ship with the repo. Only the private
 # data folders above are excluded.
+=======
+>>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
 
 # Python cache
 __pycache__/
@@ -21,5 +24,8 @@ __pycache__/
 # OS files
 Thumbs.db
 .DS_Store
+<<<<<<< HEAD
 # User-uploaded CVs (private documents)
 uploads/
+=======
+>>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
