@@ -27,8 +27,9 @@ class Config:
     CURRENCY = "PKR"
     TAX_RATE = 0.0
 
-    # Office login password (set the WEMS_PASSWORD environment variable to override)
-    OFFICE_PASSWORD = os.environ.get('WEMS_PASSWORD') or '025896'
+    # Legacy shared password — retired by the multi-user login system.
+    # Kept for compatibility; set the WEMS_PASSWORD environment variable to provide it.
+    OFFICE_PASSWORD = os.environ.get('WEMS_PASSWORD')
 
     @staticmethod
     def init_app(app):

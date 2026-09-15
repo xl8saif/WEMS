@@ -1,37 +1,18 @@
+import os
 import io
-<<<<<<< HEAD
 import shutil
 import glob as globmod
 import hmac
-=======
-import os
-import shutil
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
 from datetime import datetime, timedelta
-from decimal import Decimal, InvalidOperation
+from functools import wraps
 
-<<<<<<< HEAD
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, make_response, session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from xhtml2pdf import pisa
-=======
-from flask import (
-    Flask,
-    jsonify,
-    make_response,
-    redirect,
-    render_template,
-    request,
-    send_file,
-    flash,
-    url_for,
-)
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
-from xhtml2pdf import pisa
 
 from config import Config
 from database.db import (
@@ -48,7 +29,6 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
 
-<<<<<<< HEAD
 # ==================== DOCUMENT LANGUAGE ====================
 # Printable documents (invoice print view / PDF) follow the UI language.
 # i18n.js mirrors the toggle choice into the `wems-lang` cookie; the server
@@ -130,16 +110,6 @@ def auto_backup():
         pass
 
 # Initialize database on startup
-=======
-for directory in [
-    Config.INVOICE_DIR,
-    Config.EXPORT_DIR,
-    Config.BACKUP_DIR,
-    Config.STATIC_IMAGE_DIR,
-]:
-    os.makedirs(directory, exist_ok=True)
-
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
 init_db()
 auto_backup()
 
@@ -284,7 +254,6 @@ def get_invoice_or_404(conn, invoice_id):
 @app.context_processor
 def inject_globals():
     return {
-<<<<<<< HEAD
         'company_name': Config.COMPANY_NAME,
         'company_address': Config.COMPANY_ADDRESS,
         'company_phone': Config.COMPANY_PHONE,
@@ -306,16 +275,6 @@ def parse_float(value, field_label, default=None):
     except (TypeError, ValueError):
         flash(f'Invalid number entered in "{field_label}". Please enter digits only.', 'error')
         return None
-=======
-        "company_name": Config.COMPANY_NAME,
-        "company_address": Config.COMPANY_ADDRESS,
-        "company_phone": Config.COMPANY_PHONE,
-        "company_email": Config.COMPANY_EMAIL,
-        "currency": Config.CURRENCY,
-        "current_year": datetime.now().year,
-    }
-
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
 
 # ==================== DASHBOARD ====================
 
@@ -364,7 +323,6 @@ def clients_list():
 
 @app.route("/clients/add", methods=["GET", "POST"])
 def client_add():
-<<<<<<< HEAD
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         if not name:
@@ -383,28 +341,6 @@ def client_add():
             request.form.get('cnic', ''),
             request.form.get('client_type', 'Individual')
         ))
-=======
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        if not name:
-            flash("Client name is required.", "error")
-            return render_template("clients/form.html", client=None)
-        conn = get_db_connection()
-        conn.execute(
-            """INSERT INTO clients
-            (name, contact_person, phone, email, address, cnic, client_type)
-            VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (
-                name,
-                request.form.get("contact_person", "").strip(),
-                request.form.get("phone", "").strip(),
-                request.form.get("email", "").strip(),
-                request.form.get("address", "").strip(),
-                request.form.get("cnic", "").strip(),
-                request.form.get("client_type", "Individual"),
-            ),
-        )
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
         conn.commit()
         conn.close()
         flash("Client added successfully!", "success")
@@ -433,7 +369,6 @@ def client_detail(id):
 def client_edit(id):
     conn = get_db_connection()
     client = conn.execute("SELECT * FROM clients WHERE id = ?", (id,)).fetchone()
-<<<<<<< HEAD
 
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -450,23 +385,6 @@ def client_edit(id):
             request.form.get('address', ''), request.form.get('cnic', ''),
             request.form.get('client_type', 'Individual'), id
         ))
-=======
-    if not client:
-        conn.close()
-        return "Client not found", 404
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        if not name:
-            conn.close()
-            flash("Client name is required.", "error")
-            return redirect(url_for("client_detail", id=id))
-        conn.execute(
-            """UPDATE clients SET name=?, contact_person=?, phone=?, email=?, address=?, cnic=?, client_type=? WHERE id=?""",
-            (name, request.form.get("contact_person", ""), request.form.get("phone", ""),
-             request.form.get("email", ""), request.form.get("address", ""),
-             request.form.get("cnic", ""), request.form.get("client_type", "Individual"), id),
-        )
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
         conn.commit()
         conn.close()
         flash("Client updated successfully!", "success")
@@ -478,7 +396,6 @@ def client_edit(id):
 @app.route("/clients/<int:id>/delete", methods=["POST"])
 def client_delete(id):
     conn = get_db_connection()
-<<<<<<< HEAD
     invoice_count = conn.execute("SELECT COUNT(*) FROM invoices WHERE client_id = ?", (id,)).fetchone()[0]
     if invoice_count > 0:
         conn.close()
@@ -490,9 +407,6 @@ def client_delete(id):
         flash('This client has jobs on record and cannot be deleted. Delete their jobs first.', 'error')
         return redirect(url_for('clients_list'))
     conn.execute("DELETE FROM clients WHERE id = ?", (id,))
-=======
-    cursor = conn.execute("DELETE FROM clients WHERE id = ?", (id,))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     conn.commit()
     conn.close()
     if cursor.rowcount == 0:
@@ -514,7 +428,6 @@ def services_list():
 
 @app.route("/services/add", methods=["POST"])
 def service_add():
-<<<<<<< HEAD
     service_name = request.form.get('service_name', '').strip()
     category = request.form.get('category', '').strip()
     if not service_name or not category:
@@ -531,20 +444,6 @@ def service_add():
         service_name, category,
         request.form.get('description', ''), base_price
     ))
-=======
-    try:
-        base_price = parse_nonnegative_decimal(request.form.get("base_price", "0"), "base price")
-        service_name = request.form.get("service_name", "").strip()
-        category = request.form.get("category", "").strip()
-        if not service_name or not category:
-            raise ValueError("Service name and category are required.")
-    except ValueError as exc:
-        flash(str(exc), "error")
-        return redirect(url_for("services_list"))
-    conn = get_db_connection()
-    conn.execute("INSERT INTO services (service_name, category, description, base_price) VALUES (?, ?, ?, ?)",
-                 (service_name, category, request.form.get("description", ""), float(base_price)))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     conn.commit()
     conn.close()
     flash("Service added successfully!", "success")
@@ -553,7 +452,6 @@ def service_add():
 
 @app.route("/services/<int:id>/edit", methods=["POST"])
 def service_edit(id):
-<<<<<<< HEAD
     service_name = request.form.get('service_name', '').strip()
     category = request.form.get('category', '').strip()
     if not service_name or not category:
@@ -570,24 +468,6 @@ def service_edit(id):
         service_name, category,
         request.form.get('description', ''), base_price, id
     ))
-=======
-    try:
-        base_price = parse_nonnegative_decimal(request.form.get("base_price", "0"), "base price")
-        service_name = request.form.get("service_name", "").strip()
-        category = request.form.get("category", "").strip()
-        if not service_name or not category:
-            raise ValueError("Service name and category are required.")
-    except ValueError as exc:
-        flash(str(exc), "error")
-        return redirect(url_for("services_list"))
-    conn = get_db_connection()
-    exists = conn.execute("SELECT id FROM services WHERE id = ?", (id,)).fetchone()
-    if not exists:
-        conn.close()
-        return "Service not found", 404
-    conn.execute("UPDATE services SET service_name=?, category=?, description=?, base_price=? WHERE id=?",
-                 (service_name, category, request.form.get("description", ""), float(base_price), id))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     conn.commit()
     conn.close()
     flash("Service updated!", "success")
@@ -597,11 +477,7 @@ def service_edit(id):
 @app.route("/services/<int:id>/delete", methods=["POST"])
 def service_delete(id):
     conn = get_db_connection()
-<<<<<<< HEAD
     conn.execute("UPDATE services SET is_active = 0 WHERE id = ?", (id,))
-=======
-    cursor = conn.execute("DELETE FROM services WHERE id = ?", (id,))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     conn.commit()
     conn.close()
     flash("Service deleted!" if cursor.rowcount else "Service not found.", "success" if cursor.rowcount else "error")
@@ -641,7 +517,6 @@ def job_add():
     conn = get_db_connection()
     clients = conn.execute("SELECT id, name FROM clients ORDER BY name").fetchall()
     services = conn.execute("SELECT * FROM services WHERE is_active=1 ORDER BY service_name").fetchall()
-<<<<<<< HEAD
 
     if request.method == 'POST':
         if not request.form.get('client_id') or not request.form.get('job_title', '').strip():
@@ -664,37 +539,6 @@ def job_add():
             request.form.get('due_date'), cost,
             request.form.get('notes', '')
         ))
-=======
-    if request.method == "POST":
-        try:
-            client_id = int(request.form.get("client_id", "0"))
-            if not conn.execute("SELECT id FROM clients WHERE id=?", (client_id,)).fetchone():
-                raise ValueError("Selected client does not exist.")
-            service_id = request.form.get("service_id") or None
-            if service_id:
-                service_id = int(service_id)
-                if not conn.execute("SELECT id FROM services WHERE id=?", (service_id,)).fetchone():
-                    raise ValueError("Selected service does not exist.")
-            job_title = request.form.get("job_title", "").strip()
-            category = request.form.get("category", "").strip()
-            if not job_title or not category:
-                raise ValueError("Job title and category are required.")
-            cost = parse_nonnegative_decimal(request.form.get("cost", "0"), "cost")
-            start_date = valid_date(request.form.get("start_date"), "start date")
-            due_date = valid_date(request.form.get("due_date"), "due date")
-            if start_date and due_date and due_date < start_date:
-                raise ValueError("Due date cannot be earlier than start date.")
-        except (ValueError, TypeError) as exc:
-            conn.close()
-            flash(str(exc), "error")
-            return redirect(url_for("job_add"))
-        conn.execute("""INSERT INTO jobs
-            (client_id, service_id, job_title, category, description, priority, assigned_to, start_date, due_date, cost, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (client_id, service_id, job_title, category, request.form.get("description", ""),
-             request.form.get("priority", "Normal"), request.form.get("assigned_to", ""),
-             start_date, due_date, float(cost), request.form.get("notes", "")))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
         conn.commit()
         conn.close()
         flash("Job created successfully!", "success")
@@ -724,7 +568,6 @@ def job_edit(id):
         return "Job not found", 404
     clients = conn.execute("SELECT id, name FROM clients ORDER BY name").fetchall()
     services = conn.execute("SELECT * FROM services WHERE is_active=1 ORDER BY service_name").fetchall()
-<<<<<<< HEAD
 
     if request.method == 'POST':
         if not request.form.get('client_id') or not request.form.get('job_title', '').strip():
@@ -758,42 +601,6 @@ def job_edit(id):
             request.form.get('start_date'), request.form.get('due_date'),
             completed_date, cost, request.form.get('notes', ''), id
         ))
-=======
-    if request.method == "POST":
-        try:
-            client_id = int(request.form.get("client_id", "0"))
-            if not conn.execute("SELECT id FROM clients WHERE id=?", (client_id,)).fetchone():
-                raise ValueError("Selected client does not exist.")
-            service_id = request.form.get("service_id") or None
-            if service_id:
-                service_id = int(service_id)
-                if not conn.execute("SELECT id FROM services WHERE id=?", (service_id,)).fetchone():
-                    raise ValueError("Selected service does not exist.")
-            status = request.form.get("status", job["status"])
-            completed_date = job["completed_date"]
-            if status == "Completed" and job["status"] != "Completed":
-                completed_date = datetime.now().strftime("%Y-%m-%d")
-            elif status != "Completed":
-                completed_date = None
-            cost = parse_nonnegative_decimal(request.form.get("cost", "0"), "cost")
-            start_date = valid_date(request.form.get("start_date"), "start date")
-            due_date = valid_date(request.form.get("due_date"), "due date")
-            if start_date and due_date and due_date < start_date:
-                raise ValueError("Due date cannot be earlier than start date.")
-            job_title = request.form.get("job_title", "").strip()
-            category = request.form.get("category", "").strip()
-            if not job_title or not category:
-                raise ValueError("Job title and category are required.")
-        except (ValueError, TypeError) as exc:
-            conn.close()
-            flash(str(exc), "error")
-            return redirect(url_for("job_edit", id=id))
-        conn.execute("""UPDATE jobs SET client_id=?, service_id=?, job_title=?, category=?, description=?, status=?,
-                     priority=?, assigned_to=?, start_date=?, due_date=?, completed_date=?, cost=?, notes=? WHERE id=?""",
-            (client_id, service_id, job_title, category, request.form.get("description", ""), status,
-             request.form.get("priority", "Normal"), request.form.get("assigned_to", ""), start_date,
-             due_date, completed_date, float(cost), request.form.get("notes", ""), id))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
         conn.commit()
         conn.close()
         flash("Job updated successfully!", "success")
@@ -805,16 +612,12 @@ def job_edit(id):
 @app.route("/jobs/<int:id>/delete", methods=["POST"])
 def job_delete(id):
     conn = get_db_connection()
-<<<<<<< HEAD
     invoice_count = conn.execute("SELECT COUNT(*) FROM invoices WHERE job_id = ?", (id,)).fetchone()[0]
     if invoice_count > 0:
         conn.close()
         flash('This job has invoices linked to it and cannot be deleted.', 'error')
         return redirect(url_for('jobs_list'))
     conn.execute("DELETE FROM jobs WHERE id = ?", (id,))
-=======
-    cursor = conn.execute("DELETE FROM jobs WHERE id=?", (id,))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     conn.commit()
     conn.close()
     flash("Job deleted!" if cursor.rowcount else "Job not found.", "success" if cursor.rowcount else "error")
@@ -848,7 +651,6 @@ def invoice_create():
     conn = get_db_connection()
     clients = conn.execute("SELECT id, name FROM clients ORDER BY name").fetchall()
     services = conn.execute("SELECT * FROM services WHERE is_active=1 ORDER BY service_name").fetchall()
-<<<<<<< HEAD
 
     if request.method == 'POST':
         client_id = request.form.get('client_id')
@@ -919,74 +721,6 @@ def invoice_create():
             """, (invoice_id, item[0], item[1], item[2], item[3]))
 
         conn.commit()
-=======
-    if request.method == "POST":
-        try:
-            client_id = int(request.form.get("client_id", "0"))
-            if not conn.execute("SELECT id FROM clients WHERE id=?", (client_id,)).fetchone():
-                raise ValueError("Selected client does not exist.")
-            job_id = request.form.get("job_id") or None
-            if job_id:
-                job_id = int(job_id)
-                job = conn.execute("SELECT id, client_id FROM jobs WHERE id=?", (job_id,)).fetchone()
-                if not job:
-                    raise ValueError("Selected job does not exist.")
-                if job["client_id"] != client_id:
-                    raise ValueError("Selected job does not belong to the selected client.")
-            issue_date = valid_date(request.form.get("issue_date"), "issue date", required=True)
-            due_date = valid_date(request.form.get("due_date"), "due date")
-            if due_date and due_date < issue_date:
-                raise ValueError("Due date cannot be earlier than issue date.")
-            descriptions = request.form.getlist("item_description[]")
-            quantities = request.form.getlist("item_quantity[]")
-            unit_prices = request.form.getlist("item_unit_price[]")
-            if not descriptions:
-                raise ValueError("An invoice must contain at least one item.")
-            items = []
-            subtotal = Decimal("0")
-            for index, desc in enumerate(descriptions):
-                desc = desc.strip()
-                if not desc:
-                    continue
-                qty_raw = quantities[index] if index < len(quantities) else "1"
-                price_raw = unit_prices[index] if index < len(unit_prices) else "0"
-                qty = parse_nonnegative_decimal(qty_raw, "quantity", allow_zero=False)
-                price = parse_nonnegative_decimal(price_raw, "unit price")
-                total = qty * price
-                subtotal += total
-                items.append((desc, qty, price, total))
-            if not items:
-                raise ValueError("An invoice must contain at least one non-empty item.")
-            tax_amount = subtotal * Decimal(str(Config.TAX_RATE))
-            discount = parse_nonnegative_decimal(request.form.get("discount", "0"), "discount")
-            gross_total = subtotal + tax_amount
-            if discount > gross_total:
-                raise ValueError("Discount cannot exceed the invoice subtotal and tax.")
-            total_amount = gross_total - discount
-            # Serialize invoice-number generation inside the transaction. MAX(id) is
-            # stable for existing records and the UNIQUE constraint remains the final guard.
-            next_id = conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM invoices").fetchone()[0]
-            invoice_number = f"WARQ-{datetime.now().strftime('%Y%m')}-{next_id:04d}"
-            while conn.execute("SELECT 1 FROM invoices WHERE invoice_number=?", (invoice_number,)).fetchone():
-                next_id += 1
-                invoice_number = f"WARQ-{datetime.now().strftime('%Y%m')}-{next_id:04d}"
-            conn.execute("""INSERT INTO invoices
-                (invoice_number, client_id, job_id, issue_date, due_date, subtotal, tax_amount, discount,
-                 total_amount, paid_amount, balance_due, status, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'Unpaid', ?)""",
-                (invoice_number, client_id, job_id, issue_date, due_date, float(subtotal), float(tax_amount),
-                 float(discount), float(total_amount), float(total_amount), request.form.get("notes", "")))
-            invoice_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-            for desc, qty, price, total in items:
-                conn.execute("INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)",
-                             (invoice_id, desc, float(qty), float(price), float(total)))
-            conn.commit()
-        except (ValueError, TypeError, InvalidOperation) as exc:
-            conn.rollback()
-            conn.close()
-            flash(str(exc), "error")
-            return redirect(url_for("invoice_create"))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
         conn.close()
         flash(f"Invoice {invoice_number} created successfully!", "success")
         return redirect(url_for("invoice_detail", id=invoice_id))
@@ -1020,7 +754,6 @@ def invoice_pdf(id):
         return "Invoice not found", 404
     items = conn.execute("SELECT * FROM invoice_items WHERE invoice_id=?", (id,)).fetchall()
     conn.close()
-<<<<<<< HEAD
 
     # Render HTML template for PDF (language follows the UI toggle via cookie)
     _ensure_urdu_pdf_font()
@@ -1035,12 +768,6 @@ def invoice_pdf(id):
     result = io.BytesIO()
     pdf = pisa.CreatePDF(io.StringIO(html), result, link_callback=_pdf_link_callback)
 
-=======
-    lang = "en" if request.args.get("lang") == "en" else "ur"
-    html = render_template("invoices/invoice_pdf.html", invoice=invoice, items=items, lang=lang)
-    result = io.BytesIO()
-    pdf = pisa.CreatePDF(io.StringIO(html), result)
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     if not pdf.err:
         response = make_response(result.getvalue())
         response.headers["Content-Type"] = "application/pdf"
@@ -1061,23 +788,17 @@ def invoice_print(id):
         return "Invoice not found", 404
     items = conn.execute("SELECT * FROM invoice_items WHERE invoice_id=?", (id,)).fetchall()
     conn.close()
-<<<<<<< HEAD
     return render_template('invoices/print.html', invoice=invoice, items=items,
                            lang=get_doc_lang(),
                            signature_url=url_for('static', filename='images/Waraq-Signature.jpg'),
                            stamp_url=url_for('static', filename='images/Waraq-Stamp.jpg'),
                            waraq_logo_url=url_for('static', filename='images/waraq-logo-transparent.png'),
                            cloudtrans_logo_url=url_for('static', filename='images/cloudtrans-logo-transparent.png'))
-=======
-    lang = "en" if request.args.get("lang") == "en" else "ur"
-    return render_template("invoices/print.html", invoice=invoice, items=items, lang=lang)
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
 
 
 @app.route("/invoices/<int:id>/delete", methods=["POST"])
 def invoice_delete(id):
     conn = get_db_connection()
-<<<<<<< HEAD
     payment_count = conn.execute("SELECT COUNT(*) FROM payments WHERE invoice_id = ?", (id,)).fetchone()[0]
     if payment_count > 0:
         conn.close()
@@ -1085,14 +806,6 @@ def invoice_delete(id):
         return redirect(url_for('invoices_list'))
     conn.execute("DELETE FROM invoice_items WHERE invoice_id = ?", (id,))
     conn.execute("DELETE FROM invoices WHERE id = ?", (id,))
-=======
-    exists = conn.execute("SELECT id FROM invoices WHERE id=?", (id,)).fetchone()
-    if not exists:
-        conn.close()
-        flash("Invoice not found.", "error")
-        return redirect(url_for("invoices_list"))
-    conn.execute("DELETE FROM invoices WHERE id=?", (id,))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     conn.commit()
     conn.close()
     flash("Invoice deleted!", "success")
@@ -1113,7 +826,6 @@ def payments_list():
 
 @app.route("/payments/add", methods=["POST"])
 def payment_add():
-<<<<<<< HEAD
     invoice_id = request.form.get('invoice_id')
     client_id = request.form.get('client_id')
     payment_date = request.form.get('payment_date') or datetime.now().strftime('%Y-%m-%d')
@@ -1156,45 +868,6 @@ def payment_add():
     """, (amount, amount, amount, amount, invoice_id))
 
     conn.commit()
-=======
-    conn = get_db_connection()
-    try:
-        invoice_id = int(request.form.get("invoice_id", "0"))
-        client_id = int(request.form.get("client_id", "0"))
-        amount = parse_nonnegative_decimal(request.form.get("amount", ""), "payment amount", allow_zero=False)
-        payment_date = valid_date(request.form.get("payment_date"), "payment date", required=True)
-        payment_method = request.form.get("payment_method", "Cash")
-        reference_no = request.form.get("reference_no", "")
-        notes = request.form.get("notes", "")
-        invoice = conn.execute("SELECT id, client_id, total_amount, paid_amount, balance_due, status FROM invoices WHERE id=?", (invoice_id,)).fetchone()
-        if not invoice:
-            raise ValueError("Invoice not found.")
-        if invoice["client_id"] != client_id:
-            raise ValueError("Selected client does not match the invoice.")
-        outstanding = Decimal(str(invoice["balance_due"] or 0))
-        if outstanding <= 0:
-            raise ValueError("This invoice has no outstanding balance.")
-        if amount > outstanding:
-            raise ValueError("Payment cannot exceed the outstanding balance.")
-        conn.execute("""INSERT INTO payments
-            (invoice_id, client_id, amount, payment_date, payment_method, reference_no, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (invoice_id, client_id, float(amount), payment_date, payment_method, reference_no, notes))
-        new_paid = Decimal(str(invoice["paid_amount"] or 0)) + amount
-        new_balance = outstanding - amount
-        status = "Paid" if new_balance <= 0 else "Partial"
-        conn.execute("UPDATE invoices SET paid_amount=?, balance_due=?, status=? WHERE id=?",
-                     (float(new_paid), float(max(new_balance, Decimal("0"))), status, invoice_id))
-        conn.commit()
-    except (ValueError, TypeError, InvalidOperation) as exc:
-        conn.rollback()
-        conn.close()
-        flash(str(exc), "error")
-        invoice_id = request.form.get("invoice_id")
-        if invoice_id and str(invoice_id).isdigit():
-            return redirect(url_for("invoice_detail", id=int(invoice_id)))
-        return redirect(url_for("payments_list"))
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     conn.close()
     flash("Payment recorded successfully!", "success")
     return redirect(url_for("invoice_detail", id=invoice_id))
@@ -1358,7 +1031,6 @@ def export_jobs():
 
 # ==================== BACKUP ====================
 
-<<<<<<< HEAD
 # ==================== USERS ADMIN (admin only) ====================
 
 @app.route('/users')
@@ -1637,24 +1309,6 @@ def backup():
     safe_prune_backups(keep=30)
     flash(f'Database backed up to {backup_path}', 'success')
     return redirect(url_for('dashboard'))
-=======
-@app.route("/backup", methods=["POST"])
-def backup():
-    """Create a database backup and immediately download it."""
-    if not os.path.exists(Config.DATABASE):
-        flash("Database file not found.", "error")
-        return redirect(url_for("dashboard"))
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_path = os.path.join(Config.BACKUP_DIR, f"waraq_backup_{timestamp}.db")
-    try:
-        shutil.copy2(Config.DATABASE, backup_path)
-    except OSError as exc:
-        flash(f"Backup failed: {exc}", "error")
-        return redirect(url_for("dashboard"))
-    return send_file(backup_path, mimetype="application/octet-stream", as_attachment=True,
-                     download_name=os.path.basename(backup_path))
-
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
 
 # ==================== API ENDPOINTS ====================
 

@@ -129,7 +129,6 @@ def init_db():
         )
     """)
 
-<<<<<<< HEAD
     # User accounts (username + hashed password login)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -168,40 +167,6 @@ def init_db():
         cursor.execute("DELETE FROM user_profile WHERE user_id IS NULL")
 
     # Insert default services if empty
-=======
-    # Compatibility triggers repair referential behavior for existing databases
-    # without requiring destructive table reconstruction/migration.
-    cursor.executescript("""
-        CREATE TRIGGER IF NOT EXISTS trg_invoice_delete_children
-        AFTER DELETE ON invoices
-        BEGIN
-            DELETE FROM invoice_items WHERE invoice_id = OLD.id;
-            DELETE FROM payments WHERE invoice_id = OLD.id;
-        END;
-
-        CREATE TRIGGER IF NOT EXISTS trg_client_delete_children
-        BEFORE DELETE ON clients
-        BEGIN
-            DELETE FROM payments WHERE client_id = OLD.id;
-            DELETE FROM invoice_items WHERE invoice_id IN (SELECT id FROM invoices WHERE client_id = OLD.id);
-            DELETE FROM invoices WHERE client_id = OLD.id;
-            DELETE FROM jobs WHERE client_id = OLD.id;
-        END;
-
-        CREATE TRIGGER IF NOT EXISTS trg_job_delete_invoice_reference
-        BEFORE DELETE ON jobs
-        BEGIN
-            UPDATE invoices SET job_id = NULL WHERE job_id = OLD.id;
-        END;
-
-        CREATE TRIGGER IF NOT EXISTS trg_service_delete_job_reference
-        BEFORE DELETE ON services
-        BEGIN
-            UPDATE jobs SET service_id = NULL WHERE service_id = OLD.id;
-        END;
-    """)
-
->>>>>>> 6264753d4b9418a648049de6b90e57d5cc737350
     cursor.execute("SELECT COUNT(*) FROM services")
     if cursor.fetchone()[0] == 0:
         default_services = [
