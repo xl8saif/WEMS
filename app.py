@@ -26,6 +26,8 @@ from database.db import (
     get_outstanding_clients,
     get_setting,
     set_setting,
+    increment_visitor_count,
+    get_visitor_count,
 )
 
 app = Flask(__name__)
@@ -120,6 +122,11 @@ auto_backup()
 
 @app.before_request
 def require_login():
+    # Count one visit per browser session. Static assets and setup redirects
+    # do not create additional visitor counts.
+    if request.endpoint not in ('static', 'setup') and not session.get('visitor_counted'):
+        increment_visitor_count()
+        session['visitor_counted'] = True
     allowed = ('login', 'setup', 'static')
     if request.endpoint in allowed:
         return None
@@ -300,6 +307,7 @@ def inject_globals():
         'currency': Config.CURRENCY,
         'current_year': datetime.now().year,
         'current_user': _current_user(),
+        'visitor_count': get_visitor_count(),
     }
 
 # ==================== VALIDATION HELPERS ====================
@@ -349,6 +357,14 @@ def dashboard():
         collected=collected,
         li_posts=li_posts,
     )
+
+
+
+# ==================== URDU CALCULATOR ====================
+
+@app.route("/calculator")
+def calculator():
+    return render_template("calculator.html")
 
 
 # ==================== CLIENTS ====================
