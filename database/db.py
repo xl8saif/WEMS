@@ -174,6 +174,16 @@ def init_db():
         )
     """)
 
+    # Visitor counter: total browser sessions that have opened WEMS.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS visitor_stats (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            total_visitors INTEGER NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cursor.execute("INSERT OR IGNORE INTO visitor_stats (id, total_visitors) VALUES (1, 0)")
+
     # Insert default services if empty
     cursor.execute("SELECT COUNT(*) FROM services")
     if cursor.fetchone()[0] == 0:
@@ -298,3 +308,24 @@ def set_setting(key, value):
     )
     conn.commit()
     conn.close()
+
+
+def increment_visitor_count():
+    """Atomically increment and return the total visitor count."""
+    conn = get_db_connection()
+    conn.execute("""
+        UPDATE visitor_stats
+        SET total_visitors = total_visitors + 1, updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+    """)
+    row = conn.execute("SELECT total_visitors FROM visitor_stats WHERE id = 1").fetchone()
+    conn.commit()
+    conn.close()
+    return row["total_visitors"] if row else 0
+
+
+def get_visitor_count():
+    conn = get_db_connection()
+    row = conn.execute("SELECT total_visitors FROM visitor_stats WHERE id = 1").fetchone()
+    conn.close()
+    return row["total_visitors"] if row else 0
