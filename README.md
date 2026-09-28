@@ -115,6 +115,14 @@ A project of Waraq Enterprises, Gilgit.
 
 Developed by **سید سیف اللہ جیلانی**.
 
+## Developer portfolio
+
+WEMS is part of Saif Ullah's multilingual technology and localization work.
+
+Portfolio: https://xl8saif.github.io/site/
+
+Professional focus: Arabic ↔ Urdu translation, localization, LQA, MTPE, AI data and language technology.
+
 ## License
 
 Proprietary - Waraq Enterprises, Gilgit
