@@ -1,5 +1,10 @@
 # Waraq Enterprise Management System (WEMS)
 
+**Waraq Enterprises, Gilgit**  
+Developed by **Saif Ullah Jailani**
+
+WEMS is part of Saif Ullah’s broader multilingual language-technology and localization work, connecting practical business software with English/Urdu RTL workflows.
+
 WEMS is an offline-first desktop business management system for Waraq Enterprises, Gilgit.
 
 ## Current capabilities
